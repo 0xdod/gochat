@@ -73,7 +73,7 @@ func MapRoutes(n *negroni.Negroni) {
 	authRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/r", http.StatusSeeOther)
 	})
-	authRouter.HandleFunc("/messages", mh.Save).Methods("POST")
+	authRouter.HandleFunc("/messages", mh.Create).Methods("POST")
 	authRouter.HandleFunc("/messages", mh.List).Methods("GET")
 	authRouter.HandleFunc("/u/{id}", uh.ProfileDetail)
 	n.UseHandler(r)

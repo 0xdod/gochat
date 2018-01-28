@@ -14,7 +14,7 @@ type MessageHandler struct {
 	models.UserService
 }
 
-func (mh *MessageHandler) Save(w http.ResponseWriter, r *http.Request) {
+func (mh *MessageHandler) Create(w http.ResponseWriter, r *http.Request) {
 	data := CreateMessageJSON{}
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {

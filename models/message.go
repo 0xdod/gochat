@@ -12,7 +12,7 @@ type Message struct {
 	UserID  uint
 	User    *User
 	RoomID  uint
-	Room    *Room
+	Room    *Room `gorm:"constraint:OnDelete:CASCADE;"`
 }
 
 func (m Message) String() string {
