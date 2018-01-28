@@ -1,0 +1,23 @@
+{{ define "sidebar"}}
+<div class="col-md-3 bg-dark text-white" style="position: relative;">
+  <h2 class="px-2">My Rooms</h2>
+  <ul>
+    {{ range .rooms }}
+    <li class="p-3">{{.Name}}</li>
+    {{ else }}
+    <p class="info p-3">No room available.</p>
+    {{end}}
+  </ul>
+  <div
+    class="mt-auto join-icon"
+    style="position: absolute; left: 70%; top: 90%;"
+  >
+    <button
+      class="btn btn-success shadow"
+      style="height: 50px; width: 50px; border-radius: 50%;"
+    >
+      +
+    </button>
+  </div>
+</div>
+{{end}}

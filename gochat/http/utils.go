@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 	"fmt"
 	"log"
@@ -99,4 +100,24 @@ func (s *Server) serverError(w http.ResponseWriter, err error) {
 func (s *Server) clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 
+}
+
+func NewContextWithSession(ctx context.Context, s map[string]interface{}) context.Context {
+	return context.WithValue(ctx, "session", s)
+}
+
+func SessionFromContext(ctx context.Context) map[interface{}]interface{} {
+	session, ok := ctx.Value("session").(map[interface{}]interface{})
+	if !ok {
+		return nil
+	}
+	return session
+}
+
+func FlashFromContext(ctx context.Context) []FlashMessage {
+	messages, ok := ctx.Value("flash").([]FlashMessage)
+	if !ok {
+		return nil
+	}
+	return messages
 }

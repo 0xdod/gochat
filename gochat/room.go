@@ -7,10 +7,18 @@ import (
 // Room represents a single chat room.
 type Room struct {
 	Model
-	Name        string  `json:"name" gorm:"not null,size:100"`
-	Description *string `json:"description,omitempty"`
-	Link        string  `json:"link" gorm:"not null"`
-	Icon        *string `json:"icon"`
+	Name         string     `json:"name" gorm:"not null,size:100"`
+	Description  *string    `json:"description,omitempty"`
+	Link         string     `json:"link" gorm:"not null"`
+	Invite       string     `json:"invite" gorm:"not null,uniqueIndex"`
+	Icon         *string    `json:"icon"`
+	Participants []*User    `json:"participants" gorm:"many2many:room_participants;"`
+	Admins       []*User    `json:"admins" gorm:"many2many:room_admins;"`
+	Messages     []*Message `gorm:"constraint:OnDelete:CASCADE;"`
+}
+
+func (r *Room) InviteLink() string {
+	return ""
 }
 
 // RoomService represents a service for managing messages.

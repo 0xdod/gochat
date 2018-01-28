@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -16,7 +17,12 @@ func init() {
 var availableRooms = make(map[*ws.Room]bool)
 
 func (s *Server) chat(w http.ResponseWriter, r *http.Request) {
-	s.render(w, r, "chat.html", nil)
+	// does chat room exist?
+	// if yes, does user already belong to room.
+	// if yes add new participant
+	// ?if no, retrieve old messages and render page (or do nothing)
+	// if no room must be created.
+	s.render(w, r, "chat.html", templateData{})
 }
 
 func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +55,7 @@ func (s *Server) createRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	availableRooms[room] = true
-	go room.Run()
+	addFlash(w, r, "success", fmt.Sprintf("Successfully created %q room", form.Name))
 	http.Redirect(w, r, "/chat", http.StatusSeeOther)
 }
 

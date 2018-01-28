@@ -2,6 +2,7 @@ package templates
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -13,58 +14,89 @@ import (
 	"embed"
 )
 
+type Options struct {
+	fs.FS
+	MainLayout string
+	Layouts    string
+	Partials   string
+	Pages      string
+	Ext        string
+	Funcs      template.FuncMap
+	Directory  string
+}
+
+func New(opts ...Options) *templateStore {
+	var options Options
+	if len(opts) > 0 {
+		options = opts[0]
+	} else {
+		options = defaultOptions
+	}
+	tmpl := &templateStore{
+		options: options,
+	}
+	tmpl.Parse()
+	return tmpl
+}
+
 //go:embed layouts/*.html pages/*.html partials/*.html
 var templatesFS embed.FS
 
 type templateStore struct {
 	once      sync.Once
 	templates map[string]*template.Template
-	isParsed  bool
+	parsed    bool
+	options   Options
 }
 
-var globalTemplates = &templateStore{}
+var defaultOptions = Options{
+	FS:         templatesFS,
+	MainLayout: "base",
+	Layouts:    "layouts",
+	Partials:   "partials",
+	Ext:        ".html",
+	Pages:      "pages",
+}
 
-// ParseTemplates parses the templates in a given directory.
-func (ts *templateStore) ParseTemplates() {
+// Parse parses the templates in a given directory.
+func (ts *templateStore) Parse() {
 	ts.once.Do(func() {
-		templates := make(map[string]*template.Template)
-		layouts, err := fs.Glob(templatesFS, "layouts/*.html")
-		partials, err := fs.Glob(templatesFS, "partials/*.html")
-		pages, err := fs.Glob(templatesFS, "pages/*.html")
+		opts := ts.options
+		layoutsGlob := fmt.Sprintf("%s/*%s", opts.Layouts, opts.Ext)
+		partialsGlob := fmt.Sprintf("%s/*%s", opts.Partials, opts.Ext)
+		pagesGlob := fmt.Sprintf("%s/*%s", opts.Pages, opts.Ext)
+		layouts, err := fs.Glob(opts.FS, layoutsGlob)
+		partials, err := fs.Glob(opts.FS, partialsGlob)
+		pages, err := fs.Glob(opts.FS, pagesGlob)
 
 		if err != nil {
 			log.Fatal(err)
 		}
+		templates := make(map[string]*template.Template)
 
-		for _, layout := range layouts {
-			for _, page := range pages {
-				files := []string{layout, page}
-				files = append(files, partials...)
-				temp := template.Must(template.ParseFS(templatesFS, files...))
-				templates[filepath.Base(page)] = temp
-			}
+		for _, page := range pages {
+			name := filepath.Base(page)
+			files := make([]string, len(layouts))
+			copy(files, layouts)
+			files = append(files, page)
+			files = append(files, partials...)
+			temp := template.Must(template.ParseFS(opts.FS, files...))
+			templates[name] = temp
 		}
 		ts.templates = templates
-		ts.isParsed = true
+		ts.parsed = true
 	})
 }
 
 // Render executes a template to an io.Writer.
 func (ts *templateStore) Render(out io.Writer, name string, data interface{}) error {
-	if !ts.isParsed {
+	if !ts.parsed {
 		return errors.New("templates not parsed")
 	}
-
-	return ts.templates[name].ExecuteTemplate(out, "base", data)
+	mainLayout := ts.options.MainLayout
+	return ts.templates[name].ExecuteTemplate(out, mainLayout, data)
 }
 
-// ParseTemplates parses the files in a given directory
-// to the global templateStore.
-func ParseTemplates() {
-	globalTemplates.ParseTemplates()
-}
-
-// Render executes a template from the global templateStore.
-func Render(out io.Writer, templateName string, contextData interface{}) error {
-	return globalTemplates.Render(out, templateName, contextData)
+type Renderer interface {
+	Render(out io.Writer, name string, data interface{}) error
 }

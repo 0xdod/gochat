@@ -1,29 +1,19 @@
-{{ define "title" }}Join a room to meet people and start chatting {{ end }}
+{{ define "title" }}Join a room to meet people{{ end }}
 
-{{ define "inline_styles"}}
-<style type="text/css">
-	button {
-		font-size: 1.6rem !important;
-	}
-	#create-btn {
-		margin: 1rem;
-	}
-</style>
-{{ end }}
 
 {{ define "content" }}
-<div class="container">
-    {{if .user }}
-   <p class="alert alert-sucess"> Hello {{.user.Name}} </p>
+<div style="min-height:100vh;">
+	<div class="bg-dark text-white p-3" style="height:12vh;">
+	{{if .user }}
+   	 <p class="text-right font-weight-bold"> Hello {{.user.Name}} </p>
     {{ end }}
-    <ul>
-    {{ range .rooms }}
-     <li>{{.Name}}</li>
-    {{ else }}
-    <p class="info">No room available. </p>
-    {{end}}
-     </ul>
+	</div>
 
- {{ template "create_form.html" .}}
+	<div class="row col-md-12" style="height:88vh;">
+		{{ template "sidebar" .}}
+		<div class="col-md-9">
+			<p>Join a new room</p>
+		</div>
+	</div>
 </div>
 {{ end }}

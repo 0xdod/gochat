@@ -14,7 +14,7 @@
 		{{ block "inline_styles" .}} {{ end }}
 	</head>
 	<body>
-        {{ with (.request.Context.Value "messages") }}
+        {{ with .flash_messages }}
         {{ template "flash-message.html" .}}
         {{ end }}
 		{{ block "content" . }}

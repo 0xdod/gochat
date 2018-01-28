@@ -20,11 +20,12 @@ var publicFiles embed.FS
 
 // Server wraps net/http server
 type Server struct {
-	server *http.Server
-	router http.Handler
 	*services
+	server   *http.Server
+	router   http.Handler
 	InfoLog  *log.Logger
 	ErrorLog *log.Logger
+	Renderer templates.Renderer
 }
 
 type services struct {
@@ -55,9 +56,9 @@ func (s *Server) CreateServices(db *store.DB) {
 	}
 }
 
-// LoadTemplates loads parsed templatesates into memory
+// LoadTemplates loads parsed templates into memory
 func (s *Server) LoadTemplates() {
-	templates.ParseTemplates()
+	s.Renderer = templates.New()
 }
 
 func (s *Server) render(w http.ResponseWriter, r *http.Request, name string, data templateData) {
@@ -65,9 +66,11 @@ func (s *Server) render(w http.ResponseWriter, r *http.Request, name string, dat
 		data = templateData{}
 	}
 	data["request"] = r
-	data["user"] = UserFromContext(r.Context())
+	ctx := r.Context()
+	data["user"] = UserFromContext(ctx)
+	data["flash_messages"] = FlashFromContext(ctx)
 	buf := new(bytes.Buffer)
-	err := templates.Render(buf, name, data)
+	err := s.Renderer.Render(buf, name, data)
 	if err != nil {
 		s.serverError(w, err)
 		return
@@ -81,6 +84,16 @@ func (s *Server) Run(port string) {
 	s.ErrorLog.Fatal(s.server.ListenAndServe())
 }
 
+func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
+	session := SessionFromContext(r.Context())
+	auth, _ := session["is_auth"].(bool)
+	if auth {
+		http.Redirect(w, r, "/rooms", http.StatusSeeOther)
+		return
+	}
+	s.render(w, r, "index.html", nil)
+}
+
 func setupRoutes(s *Server) {
 	r := mux.NewRouter().StrictSlash(true)
 
@@ -88,14 +101,13 @@ func setupRoutes(s *Server) {
 
 	n.Use(negroni.HandlerFunc(SecurityMiddleware))
 	n.Use(negroni.HandlerFunc(SessionMiddleware))
+	n.Use(negroni.HandlerFunc(s.RequestUserMiddleware))
 	n.Use(negroni.HandlerFunc(FlashMiddleware))
 
-	auth := negroni.HandlerFunc(s.AuthMiddleware)
+	auth := negroni.HandlerFunc(AuthMiddleware)
 
 	r.PathPrefix("/public/").Handler(http.FileServer(http.FS(publicFiles)))
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`Hello world!`))
-	})
+	r.HandleFunc("/", s.handleIndex)
 	r.Handle("/chat", adaptFunc(s.chat, auth))
 	r.HandleFunc("/ws", s.handleWS)
 	r.HandleFunc("/login", s.login)
@@ -116,5 +128,4 @@ func adaptNegroni(h http.Handler, nh ...negroni.Handler) http.Handler {
 func adaptFunc(h http.HandlerFunc, nh ...negroni.Handler) http.Handler {
 	n := negroni.New(nh...)
 	return n.With(negroni.WrapFunc(h))
-
 }

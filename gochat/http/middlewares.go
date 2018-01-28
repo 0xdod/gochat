@@ -32,7 +32,7 @@ func SecurityMiddleware(w http.ResponseWriter, r *http.Request, next http.Handle
 
 // AuthMiddleware checks to see if a user is authenticated or not,
 // blocking the user from proceeding to protected paths.
-func (s *Server) AuthMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func AuthMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	sessionValues, ok := r.Context().Value("session").(map[interface{}]interface{})
 	if !ok {
 		next(w, r)
@@ -44,14 +44,14 @@ func (s *Server) AuthMiddleware(w http.ResponseWriter, r *http.Request, next htt
 		http.Redirect(w, r, "/login?next="+r.URL.Path, http.StatusTemporaryRedirect)
 		return
 	}
-	id, _ := sessionValues["user_id"].(int)
-	user, err := s.services.user.FindUserByID(context.Background(), id)
+	// id, _ := sessionValues["user_id"].(int)
+	// user, err := s.services.user.FindUserByID(context.Background(), id)
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	r = r.WithContext(NewContextWithUser(r.Context(), user))
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+	// r = r.WithContext(NewContextWithUser(r.Context(), user))
 	next(w, r)
 }
 
@@ -60,6 +60,22 @@ func (s *Server) AuthMiddleware(w http.ResponseWriter, r *http.Request, next htt
 func SessionMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	session, _ := sessionStore.Get(r, "session.id")
 	r = r.WithContext(context.WithValue(r.Context(), "session", session.Values))
+	next(w, r)
+}
 
+// RequestUserMiddlewarere adds user model to request context.
+func (s *Server) RequestUserMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	sessionValues, ok := r.Context().Value("session").(map[interface{}]interface{})
+	id, ok := sessionValues["user_id"].(int)
+	if !ok || id < 1 {
+		next(w, r)
+		return
+	}
+	user, err := s.services.user.FindUserByID(context.Background(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	r = r.WithContext(NewContextWithUser(r.Context(), user))
 	next(w, r)
 }
