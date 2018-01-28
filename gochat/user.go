@@ -22,7 +22,7 @@ type User struct {
 	Name      string  `json:"name" gorm:"size:255,not null"`
 	Username  string  `json:"username" gorm:"size:50,uniqueIndex,not null"`
 	Email     string  `json:"email" gorm:"size:255,uniqueIndex,not null"`
-	Password  string  `json:"password" gorm:"not null"`
+	Password  string  `json:"password" gorm:"not null,size:255"`
 	AvatarURL *string `json:"avatar_url"`
 }
 

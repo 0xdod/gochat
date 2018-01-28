@@ -1,9 +1,11 @@
 package http
 
 import (
+	"context"
 	"log"
 	"net/http"
 
+	"github.com/0xdod/gochat/gochat"
 	"github.com/0xdod/gochat/gochat/websocket"
 )
 
@@ -11,7 +13,7 @@ func init() {
 	go ws.GeneralRoom.Run()
 }
 
-var availableRooms map[*ws.Room]bool
+var availableRooms = make(map[*ws.Room]bool)
 
 func (s *Server) chat(w http.ResponseWriter, r *http.Request) {
 	s.render(w, r, "chat.html", nil)
@@ -29,18 +31,37 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) createRoom(w http.ResponseWriter, r *http.Request) {
+	room := ws.NewRoom()
 
-	if r.Method == "POST" {
-		room := ws.NewRoom()
-		availableRooms[room] = true
-		go room.Run()
-		http.Redirect(w, r, "/chat", 301)
+	form := new(roomCreateForm)
+	_ = parseForm(r, form)
+
+	if err := form.validate(); err != nil {
+		s.render(w, r, "create_room.html", templateData{
+			"errors": err,
+			"form":   form,
+		})
 		return
 	}
-	s.render(w, r, "room_list.html", nil)
-
+	err := s.services.room.CreateRoom(context.Background(), form.create())
+	if err != nil {
+		s.serverError(w, err)
+		return
+	}
+	availableRooms[room] = true
+	go room.Run()
+	http.Redirect(w, r, "/chat", http.StatusSeeOther)
 }
 
-func (s *Server) roomList(w http.ResponseWriter, r *http.Request) {
-	s.render(w, r, "room_list.html", nil)
+func (s *Server) listRooms(w http.ResponseWriter, r *http.Request) {
+	filter := gochat.RoomFilter{}
+	rooms, _, err := s.services.room.FindRooms(context.Background(), filter)
+
+	if err != nil {
+		s.serverError(w, err)
+		return
+	}
+	s.render(w, r, "room_list.html", templateData{
+		"rooms": rooms,
+	})
 }

@@ -2,10 +2,8 @@ package store
 
 import (
 	"context"
-	"errors"
 
 	"github.com/0xdod/gochat/gochat"
-	"github.com/jackc/pgconn"
 	"gorm.io/gorm"
 )
 
@@ -16,13 +14,14 @@ type UserGorm struct {
 	*gorm.DB
 }
 
-func NewGormStore(db *DB) *UserGorm {
+func NewUserStore(db *DB) *UserGorm {
 	return &UserGorm{db.DB}
 }
 
 func (us *UserGorm) FindUserByID(ctx context.Context, id int) (*gochat.User, error) {
 	user := &gochat.User{}
 	err := us.DB.WithContext(ctx).First(user, id).Error
+
 	if err != nil {
 		return nil, err
 	}
@@ -30,10 +29,10 @@ func (us *UserGorm) FindUserByID(ctx context.Context, id int) (*gochat.User, err
 }
 
 func (us *UserGorm) Authenticate(ctx context.Context, email, password string) *gochat.User {
-	// find by email
-	// if user is found, compare password
+
 	user := &gochat.User{}
 	err := us.DB.WithContext(ctx).Where("email = ?", email).First(user).Error
+
 	if err != nil {
 		return nil
 	}
@@ -58,10 +57,8 @@ func (us *UserGorm) DeleteUser(ctx context.Context, id int) error {
 
 func (us *UserGorm) CreateUser(ctx context.Context, user *gochat.User) error {
 	err := us.DB.WithContext(ctx).Create(user).Error
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+	if isDuplicateKeyError(err) {
 		return gochat.ECONFLICT
 	}
-
 	return err
 }

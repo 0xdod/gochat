@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"embed"
 	"log"
 	"net/http"
@@ -49,7 +50,8 @@ func NewServer() *Server {
 
 func (s *Server) CreateServices(db *store.DB) {
 	s.services = &services{
-		user: store.NewGormStore(db),
+		room: store.NewRoomStore(db),
+		user: store.NewUserStore(db),
 	}
 }
 
@@ -64,7 +66,13 @@ func (s *Server) render(w http.ResponseWriter, r *http.Request, name string, dat
 	}
 	data["request"] = r
 	data["user"] = UserFromContext(r.Context())
-	templates.Render(w, name, data)
+	buf := new(bytes.Buffer)
+	err := templates.Render(buf, name, data)
+	if err != nil {
+		s.serverError(w, err)
+		return
+	}
+	buf.WriteTo(w)
 }
 
 // Run the server
@@ -78,24 +86,35 @@ func setupRoutes(s *Server) {
 
 	n := negroni.Classic()
 
-	nn := negroni.New(
-		negroni.HandlerFunc(s.AuthMiddleware),
-		negroni.Wrap(http.HandlerFunc(s.roomList)))
+	n.Use(negroni.HandlerFunc(SecurityMiddleware))
+	n.Use(negroni.HandlerFunc(SessionMiddleware))
+	n.Use(negroni.HandlerFunc(FlashMiddleware))
+
+	auth := negroni.HandlerFunc(s.AuthMiddleware)
 
 	r.PathPrefix("/public/").Handler(http.FileServer(http.FS(publicFiles)))
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`Hello world!`))
 	})
-	r.HandleFunc("/chat", s.chat)
+	r.Handle("/chat", adaptFunc(s.chat, auth))
 	r.HandleFunc("/ws", s.handleWS)
 	r.HandleFunc("/login", s.login)
 	r.HandleFunc("/signup", s.register)
-	r.HandleFunc("/room", s.createRoom)
-	r.Handle("/rooms", nn)
+	r.Handle("/room/create", adaptFunc(s.createRoom, auth)).Methods("POST")
+	r.Handle("/rooms", adaptFunc(s.listRooms, auth))
 
-	n.Use(negroni.HandlerFunc(SessionMiddleware))
-	n.Use(negroni.HandlerFunc(FlashMiddleware))
 	n.UseHandler(r)
 
 	s.server.Handler = n
+}
+
+func adaptNegroni(h http.Handler, nh ...negroni.Handler) http.Handler {
+	n := negroni.New(nh...)
+	return n.With(negroni.Wrap(h))
+}
+
+func adaptFunc(h http.HandlerFunc, nh ...negroni.Handler) http.Handler {
+	n := negroni.New(nh...)
+	return n.With(negroni.WrapFunc(h))
+
 }

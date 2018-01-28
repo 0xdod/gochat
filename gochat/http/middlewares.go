@@ -9,7 +9,12 @@ import (
 func FlashMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	session, _ := sessionStore.Get(r, "flash")
 	messages := []FlashMessage{}
-	for _, v := range session.Flashes("flash") {
+	fm := session.Flashes("flash")
+	if len(fm) == 0 {
+		next(w, r)
+		return
+	}
+	for _, v := range fm {
 		message := DeserializeFlashMessage(v.(string))
 		messages = append(messages, message)
 	}
@@ -17,6 +22,12 @@ func FlashMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFu
 	r = r.WithContext(context.WithValue(r.Context(), "messages", messages))
 	next(w, r)
 
+}
+
+func SecurityMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	w.Header().Set("X-XSS-Protection", "1; mode=block")
+	w.Header().Set("X-Frame-Options", "deny")
+	next(w, r)
 }
 
 // AuthMiddleware checks to see if a user is authenticated or not,

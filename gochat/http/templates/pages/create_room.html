@@ -1,0 +1,21 @@
+{{ define "title" }}Create a room {{ end }}
+
+{{ define "inline_styles"}}
+<style type="text/css">
+	button {
+		font-size: 1.6rem !important;
+	}
+	#create-btn {
+		margin: 1rem;
+	}
+</style>
+{{ end }}
+
+{{ define "content" }}
+<div class="container">
+    {{if .user }}
+   <p class="alert alert-sucess"> Hello {{.user.Name}} </p>
+    {{ end }}
+ {{ template "create_form.html" .}}
+</div>
+{{ end }}

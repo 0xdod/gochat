@@ -14,23 +14,16 @@
 {{ define "content" }}
 <div class="container">
     {{if .user }}
-    Hello {{.user.Name}} 
+   <p class="alert alert-sucess"> Hello {{.user.Name}} </p>
     {{ end }}
-<div class="card col-md-6" id="create">
-	<h3 class="card-header">
-		Create a new room
-	</h3>
-	<form class=" card-body" id="create-form" action="" method="POST">
-	<div class="form-group">
-		<label for="name">Name</label>
-		<input class="form-control" type="text" name="name" placeholder="Enter room's name" required>
-	</div>
-	<div class="form-group">
-		<label for="description">Description</label>
-		<input class="form-control" type="text" name="description" placeholder="room's description">
-	</div>
-	<button class="btn btn-primary">Create</button>
-</form>
-</div>
+    <ul>
+    {{ range .rooms }}
+     <li>{{.Name}}</li>
+    {{ else }}
+    <p class="info">No room available. </p>
+    {{end}}
+     </ul>
+
+ {{ template "create_form.html" .}}
 </div>
 {{ end }}

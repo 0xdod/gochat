@@ -15,6 +15,7 @@ func main() {
 	}
 	n := negroni.Classic()
 	MapRoutes(n)
+
 	log.Println("Starting server on port 9000")
 	http.ListenAndServe(":"+port, n)
 }

@@ -1,6 +1,7 @@
 package templates
 
 import (
+	"errors"
 	"html/template"
 	"io"
 	"log"
@@ -49,11 +50,12 @@ func (ts *templateStore) ParseTemplates() {
 }
 
 // Render executes a template to an io.Writer.
-func (ts *templateStore) Render(out io.Writer, name string, data interface{}) {
+func (ts *templateStore) Render(out io.Writer, name string, data interface{}) error {
 	if !ts.isParsed {
-		panic("templates not parsed")
+		return errors.New("templates not parsed")
 	}
-	ts.templates[name].ExecuteTemplate(out, "base", data)
+
+	return ts.templates[name].ExecuteTemplate(out, "base", data)
 }
 
 // ParseTemplates parses the files in a given directory
@@ -63,6 +65,6 @@ func ParseTemplates() {
 }
 
 // Render executes a template from the global templateStore.
-func Render(out io.Writer, templateName string, contextData interface{}) {
-	globalTemplates.Render(out, templateName, contextData)
+func Render(out io.Writer, templateName string, contextData interface{}) error {
+	return globalTemplates.Render(out, templateName, contextData)
 }
