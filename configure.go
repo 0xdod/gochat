@@ -55,7 +55,7 @@ func GetDB(connInfo string) (*gorm.DB, error) {
 }
 
 func MapRoutes(n *negroni.Negroni) {
-	r := mux.NewRouter()
+	r := mux.NewRouter().StrictSlash(true)
 	r.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 
 	guestRouter := r.NewRoute().Subrouter()
@@ -66,7 +66,7 @@ func MapRoutes(n *negroni.Negroni) {
 	authRouter.Use(uh.MustAuth)
 	authRouter.Handle("/upload", th.HandlePage("upload.html"))
 	authRouter.Handle("/chat/{link}", th.HandlePage("chat.html"))
-	authRouter.HandleFunc("/r/{id}", rh.Chat)
+	authRouter.HandleFunc("/r/{id}", rh.ServeWs)
 	authRouter.HandleFunc("/r/leave/{id}", rh.Leave).Methods("POST")
 	authRouter.HandleFunc("/r", rh.ListOrCreate)
 	authRouter.HandleFunc("/logout", uh.Logout)
@@ -75,5 +75,6 @@ func MapRoutes(n *negroni.Negroni) {
 	})
 	authRouter.HandleFunc("/messages", mh.Save).Methods("POST")
 	authRouter.HandleFunc("/messages", mh.List).Methods("GET")
+	authRouter.HandleFunc("/u/{id}", uh.ProfileDetail)
 	n.UseHandler(r)
 }

@@ -34,7 +34,7 @@ func (ts *templateStore) renderOne(out io.Writer, filename string, data interfac
 }
 
 func (ts *templateStore) parseTemplates() {
-	// load and compile template only once
+	// lazy load and compile template only once
 	ts.templates = make(map[string]*template.Template)
 	templatesDir := "templates"
 	layoutsDir := filepath.Join(templatesDir, "layouts")
@@ -76,12 +76,21 @@ func (t *TemplateHandler) HandlePage(templateName string) http.Handler {
 			}
 			vars := mux.Vars(r)
 			if link, exists := vars["link"]; exists {
+				userRooms := t.UserService.GetRooms(user)
 				room := t.RoomService.FindByLink(link)
 				t.RoomService.AddParticipant(room, user)
-				m.Set("room", room)
+				present := false
+				for _, r := range userRooms {
+					if r.ID == room.ID {
+						present = true
+						break
+					}
+				}
 				session, _ := store.Get(r, "session.id")
-				session.Values["roomID"] = room.ID
+				session.Values["room_id"] = room.ID
+				session.Values["present"] = present
 				session.Save(r, w)
+				m.Set("room", room)
 			}
 			m.Set("MyRooms", t.UserService.GetRooms(user))
 			render(w, templateName, m)

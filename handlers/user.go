@@ -6,6 +6,7 @@ import (
 
 	"github.com/fibreactive/chat/models"
 	"github.com/gorilla/sessions"
+	"github.com/stretchr/objx"
 )
 
 //os.GetEnv(session_key)
@@ -25,7 +26,7 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		user := &models.User{
 			Firstname: form.Firstname,
 			Lastname:  form.Lastname,
-			Nickname:  form.Nickname,
+			Username:  form.Username,
 			Email:     form.Email,
 			Password:  form.Password,
 		}
@@ -50,7 +51,7 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		session, _ := store.Get(r, "session.id")
-		session.Values["id"] = user.ID
+		session.Values["user_id"] = user.ID
 		if err := session.Save(r, w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -63,11 +64,18 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 func (*UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "session.id")
-	session.Values["id"] = ""
+	session.Values["user_id"] = ""
 	if err := session.Save(r, w); err != nil {
 		return
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (uh *UserHandler) ProfileDetail(w http.ResponseWriter, r *http.Request) {
+	user := Get(r, "user")
+	data := objx.MSI()
+	data.Set("user", user)
+	render(w, "user_profile.html", data)
 }
 
 //func (uh *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {}

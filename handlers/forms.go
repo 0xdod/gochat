@@ -22,7 +22,7 @@ type LoginForm struct {
 type SignupForm struct {
 	Firstname string `schema:"firstname"`
 	Lastname  string `schema:"lastname"`
-	Nickname  string `schema:"nickname"`
+	Username  string `schema:"username"`
 	Email     string `schema:"email"`
 	Password  string `schema:"password"`
 	Password2 string `schema:"password2"`

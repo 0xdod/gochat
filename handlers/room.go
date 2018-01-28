@@ -38,6 +38,13 @@ func (rh *RoomHandler) PopulateRooms() {
 	}
 }
 
+func (rh *RoomHandler) getChatRoom(id int) *chat.Room {
+	if room, exists := rh.Rooms[id]; exists {
+		return room
+	}
+	return nil
+}
+
 func (rh *RoomHandler) ListOrCreate(w http.ResponseWriter, req *http.Request) {
 	user, ok := Get(req, "user").(*models.User)
 	if !ok {
@@ -50,15 +57,14 @@ func (rh *RoomHandler) ListOrCreate(w http.ResponseWriter, req *http.Request) {
 		if err := parseForm(req, &form); err != nil {
 			panic(err)
 		}
-		roomDB := &models.Room{
+		room := &models.Room{
 			Name:        form.Name,
 			Description: form.Description,
 		}
-		roomDB.Admins = append(roomDB.Admins, user)
-		rh.RoomService.Create(roomDB)
-		room := chat.NewRoom(roomDB)
-		rh.Rooms[int(roomDB.ID)] = room
-		http.Redirect(w, req, "/chat/"+roomDB.Link, http.StatusSeeOther)
+		room.Admins = append(room.Admins, user)
+		rh.RoomService.Create(room)
+		rh.Rooms[int(room.ID)] = chat.NewRoom(room)
+		http.Redirect(w, req, "/chat/"+room.Link, http.StatusSeeOther)
 		return
 	}
 	m := objx.MSI()
@@ -72,59 +78,61 @@ func (rh *RoomHandler) Edit(w http.ResponseWriter, req *http.Request) {
 }
 
 func (rh *RoomHandler) Leave(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	IdStr := vars["id"]
-	id, _ := strconv.Atoi(IdStr)
-	//find client
 	user, ok := Get(req, "user").(*models.User)
 	if !ok {
 		http.Error(w, errors.New("Cannot find user!").Error(), http.StatusForbidden)
 		return
 	}
-	room := rh.Rooms[id]
-	roomDB := rh.RoomService.FindByID(uint(id))
-	rh.RoomService.RemoveParticipant(roomDB, user)
-	client := room.FindClient(int(user.ID))
+	room, ok := Get(req, "room").(*models.Room)
+	if !ok {
+		http.Error(w, errors.New("Cannot find room!").Error(), http.StatusForbidden)
+		return
+	}
+	vars := mux.Vars(req)
+	roomId, _ := strconv.Atoi(vars["id"])
+	chatRoom := rh.getChatRoom(roomId)
+	if chatRoom == nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+	client := chatRoom.FindClient(int(user.ID))
 	if client == nil {
 		http.Error(w, errors.New("Cannot find client!").Error(), http.StatusForbidden)
 		return
 	}
-	room.RemoveClient(client)
+	chatRoom.RemoveClient(client)
+	rh.RoomService.RemoveParticipant(room, user)
 	w.WriteHeader(http.StatusOK)
 	return
 }
 
-func (rh *RoomHandler) Chat(w http.ResponseWriter, req *http.Request) {
+func (rh *RoomHandler) ServeWs(w http.ResponseWriter, req *http.Request) {
 	user, ok := Get(req, "user").(*models.User)
 	if !ok {
 		http.Error(w, errors.New("Cannot find client!").Error(), http.StatusForbidden)
 		return
 	}
+	session, _ := store.Get(req, "session.id")
+	isPresent := session.Values["present"].(bool)
 	socket, err := upgrader.Upgrade(w, req, nil)
 	if err != nil {
 		log.Fatal("ServeHTTP:", err)
 		return
 	}
+	client := chat.NewClient(socket, user, isPresent)
 	vars := mux.Vars(req)
 	rmID := vars["id"]
 	id, _ := strconv.Atoi(rmID)
-	room, exists := rh.Rooms[id]
-	if !exists {
+	room := rh.getChatRoom(id)
+	if room == nil {
 		return
 	}
 	if room.Nclients < 1 {
 		go room.Run()
 	}
-	roomDB, ok := Get(req, "room").(*models.Room)
-	if !ok {
-		return
-	}
-	Ispresent := rh.RoomService.IsPresent(roomDB, user)
-	client := chat.NewClient(socket, user, Ispresent)
-	defer room.RemoveClient(client)
 	room.AddClient(client)
 	go client.Write()
-	client.Read()
+	go client.Read()
 }
 
 //func (rh *RoomHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {}

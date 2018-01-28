@@ -1,5 +1,11 @@
 package chat
 
+import (
+	"time"
+
+	"github.com/gorilla/websocket"
+)
+
 //type room models a single chat room
 type Room struct {
 	//forward is a channel that holds incoming messages that should be forwarded to other clients
@@ -43,6 +49,7 @@ func (r *Room) Run() {
 				msg = generateAdminMessage(client, USER_JOINED)
 				r.sendMessageToClientsExcept(client, msg)
 			}
+			client.IsPresent = true
 		case client := <-r.leave:
 			// leaving
 			r.Nclients--
@@ -81,6 +88,8 @@ func (r *Room) AddClient(client *Client) {
 }
 
 func (r *Room) RemoveClient(client *Client) {
+	closeMessage := websocket.FormatCloseMessage(websocket.CloseGoingAway, "client has left")
+	client.socket.WriteControl(websocket.CloseMessage, closeMessage, time.Now().Add(time.Millisecond*15))
 	if _, ok := r.clients[client]; ok {
 		r.leave <- client
 	}

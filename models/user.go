@@ -1,36 +1,69 @@
 package models
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
 	gorm.Model
-	Firstname string
-	Lastname  string
-	Nickname  string
-	Email     string `gorm:"not null;unique_index"`
-	Password  string
-	AvatarURL string
-	Rooms     []*Room    `gorm:"many2many:room_participants"`
-	Messages  []*Message `gorm:"constraint:OnDelete:CASCADE;"`
+	Firstname  string
+	Lastname   string
+	Username   string
+	Email      string `gorm:"not null;unique_index"`
+	Password   string
+	AvatarURL  string
+	Rooms      []*Room    `gorm:"many2many:room_participants;constraint:OnDelete:CASCADE;"`
+	Messages   []*Message `gorm:"constraint:OnDelete:CASCADE;"`
+	AdminRooms []*Room    `gorm:"many2many:room_admins;constraint:OnDelete:CASCADE;"`
 }
 
-func (um *User) GetIntID() int {
-	return int(um.ID)
+func (u User) String() string {
+	return (&u).GetFullname()
 }
 
-func (um *User) GetStringID() string {
+func (u *User) GetIntID() int {
+	return int(u.ID)
+}
+
+func (u *User) GetFullname() string {
+	return fmt.Sprintf("%s %s", u.Firstname, u.Lastname)
+}
+
+func (*User) GetStringID() string {
 	return ""
 }
 
-func (um *User) GetName() string {
-	return um.Nickname
+func (u *User) GetName() string {
+	return u.Username
 }
 
-func (um *User) GetAvatarURL() string {
-	return um.AvatarURL
+func (u *User) GetAvatarURL() string {
+	return u.AvatarURL
+}
+
+func (u *User) SetPasswordHash() error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	u.Password = string(hash)
+	return nil
+}
+
+func (u *User) VerifyPassword(p string) error {
+	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(p))
+}
+
+func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
+	u.SetPasswordHash()
+	u.Email = strings.ToLower(u.Email)
+	return nil
 }
 
 // UserService is responsible for enabling communication between the model
@@ -103,8 +136,8 @@ func (ug *UserGorm) AutoMigrate() {
 }
 
 func (ug *UserGorm) Authenticate(email, password string) *User {
-	user := ug.FindByEmail(email)
-	if user == nil || user.Password != password {
+	user := ug.FindByEmail(strings.ToLower(email))
+	if user == nil || user.VerifyPassword(password) != nil {
 		return nil
 	}
 	return user

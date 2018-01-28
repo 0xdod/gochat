@@ -6,7 +6,6 @@ import (
 
 	"github.com/fibreactive/chat/chat"
 	"github.com/fibreactive/chat/models"
-	"github.com/stretchr/objx"
 )
 
 type MessageHandler struct {
@@ -39,16 +38,23 @@ func (mh *MessageHandler) Save(w http.ResponseWriter, r *http.Request) {
 // return chats and append html
 func (mh *MessageHandler) List(w http.ResponseWriter, r *http.Request) {
 	room := Get(r, "room").(*models.Room)
+	session, _ := store.Get(r, "session.id")
+	isPresent := session.Values["present"].(bool)
 	messages := mh.RoomService.GetMessages(room)
 	newMessages := make([]*chat.Message, len(messages))
-	for _, message := range messages {
-		message.User = mh.UserService.FindByID(uint(message.UserID))
-		newMessage := chat.NewMessageAlt(nil, message.User, message.Message)
-		newMessages = append(newMessages, newMessage)
+	if !isPresent {
+		w.WriteHeader(200)
+		return
 	}
-	data := objx.MSI()
-	data.Set("user", Get(r, "user").(*models.User))
-	data.Set("room", room)
-	data.Set("messages", newMessages)
-	renderOne(w, "message_list_ajax", data)
+	for i, message := range messages {
+		message.User = mh.UserService.FindByID(uint(message.UserID))
+		newMessage := chat.NewMessage(nil, message.User, message.Message)
+		newMessages[i] = newMessage
+	}
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(newMessages)
+	if err != nil {
+		w.WriteHeader(422)
+		return
+	}
 }

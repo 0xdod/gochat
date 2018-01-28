@@ -3,6 +3,7 @@ package models
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -21,6 +22,10 @@ type Room struct {
 	AvatarURL   string
 }
 
+func (m Room) String() string {
+	return fmt.Sprintf("%s", m.Name)
+}
+
 func (rm *Room) GetIntID() int {
 	return int(rm.ID)
 }
@@ -35,6 +40,10 @@ func (rm *Room) GetName() string {
 
 func (rm *Room) GetAvatarURL() string {
 	return rm.AvatarURL
+}
+
+func (rm *Room) IsNewClient() bool {
+	return true
 }
 
 func (rm *Room) CreateLink() {
@@ -74,7 +83,6 @@ type RoomService interface {
 	Delete(id uint) error
 	GetAdmins(*Room) []*User
 	GetParticipants(*Room) []*User
-	IsPresent(*Room, *User) bool
 	AddParticipant(*Room, *User) error
 	RemoveParticipant(*Room, *User) error
 	GetMessages(r *Room) []*Message
@@ -128,10 +136,10 @@ func (rg *RoomGorm) GetParticipants(r *Room) []*User {
 	return users
 }
 
-func (rg *RoomGorm) IsPresent(r *Room, u *User) bool {
+func (rg *RoomGorm) IsUserPresent(r *Room, u *User) bool {
 	users := rg.GetParticipants(r)
 	for _, user := range users {
-		if u.ID == user.ID {
+		if user.ID == u.ID {
 			return true
 		}
 	}

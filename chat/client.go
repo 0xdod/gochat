@@ -35,7 +35,7 @@ func NewClient(s *websocket.Conn, df DataFinder, ip bool) *Client {
 func (c *Client) Read() {
 	defer c.socket.Close()
 	for {
-		msg := NewMessage(nil, c, "")
+		msg := NewMessage(nil, c.DataFinder, "")
 		err := c.socket.ReadJSON(&msg)
 		if err != nil {
 			return

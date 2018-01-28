@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/jinzhu/gorm"
 )
 
@@ -11,6 +13,10 @@ type Message struct {
 	User    *User
 	RoomID  uint
 	Room    *Room
+}
+
+func (m Message) String() string {
+	return fmt.Sprintf("%s", m.Message)
 }
 
 type MessageService interface {

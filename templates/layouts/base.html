@@ -6,10 +6,10 @@
 		<meta http-equiv="X-UA-Compatible" content="ie=edge" />
 		<title>{{ block "title" . }} Chatupp! {{ end }}</title>
 		<link
-			href="/public/stylesheets/bootstrap/bootstrap.min.css"
+			href="/public/css/bootstrap/bootstrap.min.css"
 			rel="stylesheet"
 		/>
-		<link rel="stylesheet" href="/public/stylesheets/base.css">
+		<link rel="stylesheet" href="/public/css/base.css">
 		{{ block "stylesheets" .}} {{end}}
 		{{ block "inline_styles" .}} {{ end }}
 	</head>
@@ -22,5 +22,4 @@
 		<script src="/public/js/lib/bootstrap/bootstrap.min.js"></script>
 		{{block "scripts" .}} {{ end }}
 	</body>
-</html>
-{{ end }}
+</html>{{ end }}
