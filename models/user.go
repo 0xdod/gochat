@@ -16,6 +16,22 @@ type UserModel struct {
 	Rooms     []*RoomModel `gorm:"many2many:room_participants"`
 }
 
+func (um *UserModel) GetIntID() int {
+	return int(um.ID)
+}
+
+func (um *UserModel) GetStringID() string {
+	return ""
+}
+
+func (um *UserModel) GetName() string {
+	return um.Nickname
+}
+
+func (um *UserModel) GetAvatarURL() string {
+	return um.AvatarURL
+}
+
 // UserService is responsible for enabling communication between the model
 // and the handlers
 type UserService interface {

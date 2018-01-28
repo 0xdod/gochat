@@ -29,21 +29,12 @@ type RoomHandler struct {
 
 func (rh *RoomHandler) PopulateRooms() {
 	rh.Rooms = make(map[int]*chat.Room)
-	rooms := rh.RoomService.GetAll()
-	if len(rooms) == 0 {
-		rh.Rooms[0] = chat.NewRoom(nil)
+	roomSlice := rh.RoomService.GetAll()
+	if len(roomSlice) == 0 {
 		return
 	}
-	for _, room := range rooms {
-		if _, exists := rh.Rooms[int(room.ID)]; !exists {
-			rh.Rooms[int(room.ID)] = chat.NewRoom(room)
-		}
-	}
-
-	for _, r := range rh.Rooms {
-		if r.CountClients() > 0 {
-			go r.Run()
-		}
+	for _, room := range roomSlice {
+		rh.Rooms[int(room.ID)] = chat.NewRoom(room)
 	}
 }
 
@@ -82,18 +73,18 @@ func (rh *RoomHandler) Edit(w http.ResponseWriter, req *http.Request) {
 
 func (rh *RoomHandler) Leave(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	rID := vars["id"]
-	id, _ := strconv.Atoi(rID)
+	IdStr := vars["id"]
+	id, _ := strconv.Atoi(IdStr)
 	//find client
 	user, ok := Get(req, "user").(*models.UserModel)
 	if !ok {
-		http.Error(w, errors.New("Cannot find client!").Error(), http.StatusForbidden)
+		http.Error(w, errors.New("Cannot find user!").Error(), http.StatusForbidden)
 		return
 	}
 	room := rh.Rooms[id]
 	roomDB := rh.RoomService.FindByID(uint(id))
 	rh.RoomService.RemoveParticipant(roomDB, user)
-	client := room.FindClient(user.ID)
+	client := room.FindClient(int(user.ID))
 	if client == nil {
 		http.Error(w, errors.New("Cannot find client!").Error(), http.StatusForbidden)
 		return
@@ -115,10 +106,13 @@ func (rh *RoomHandler) Chat(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	vars := mux.Vars(req)
-	roomID := vars["id"]
-	id, _ := strconv.Atoi(roomID)
-	room := rh.Rooms[id]
-	if room.CountClients() < 1 {
+	rmID := vars["id"]
+	id, _ := strconv.Atoi(rmID)
+	room, exists := rh.Rooms[id]
+	if !exists {
+		return
+	}
+	if room.Nclients < 1 {
 		go room.Run()
 	}
 	client := chat.NewClient(socket, user)

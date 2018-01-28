@@ -2,8 +2,6 @@ package chat
 
 //Defines a client using the chat app
 import (
-	"github.com/fibreactive/chat/models"
-
 	"github.com/gorilla/websocket"
 )
 
@@ -20,15 +18,17 @@ type Client struct {
 	send chan *message
 	//room is the room this client is chatting in
 	room *Room
-	// userData holds information about the user
-	user *models.UserModel
+	// data finder knows how to find client information
+	DataFinder
 }
 
-func NewClient(s *websocket.Conn, user *models.UserModel) *Client {
+// we need avatarurl, name, id
+
+func NewClient(s *websocket.Conn, df DataFinder) *Client {
 	return &Client{
-		socket: s,
-		send:   make(chan *message, MessageBufferSize),
-		user:   user,
+		socket:     s,
+		send:       make(chan *message, MessageBufferSize),
+		DataFinder: df,
 	}
 }
 

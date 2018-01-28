@@ -20,18 +20,34 @@ type RoomModel struct {
 	AvatarURL   string
 }
 
-func CreateLink(rm *RoomModel) string {
+func (rm *RoomModel) GetIntID() int {
+	return int(rm.ID)
+}
+
+func (rm *RoomModel) GetStringID() string {
+	return ""
+}
+
+func (rm *RoomModel) GetName() string {
+	return rm.Name
+}
+
+func (rm *RoomModel) GetAvatarURL() string {
+	return rm.AvatarURL
+}
+
+func (rm *RoomModel) CreateLink() {
 	id := strconv.Itoa(int(rm.ID))
 	buf := &bytes.Buffer{}
 	wc := base64.NewEncoder(base64.URLEncoding, buf)
 	wc.Write([]byte(id + ":" + rm.Name))
 	defer wc.Close()
-	return buf.String()
+	rm.Link = buf.String()
 }
 
 func (rm *RoomModel) AfterCreate(tx *gorm.DB) (err error) {
-	l := CreateLink(rm)
-	return tx.Model(rm).Update("link", l).Error
+	rm.CreateLink()
+	return tx.Model(rm).Update("link", rm.Link).Error
 }
 
 func RoomIDFromLink(s string) int {

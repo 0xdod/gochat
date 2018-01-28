@@ -1,7 +1,5 @@
 package chat
 
-import "github.com/fibreactive/chat/models"
-
 //type room models a single chat room
 type Room struct {
 	//forward is a channel that holds incoming messages that should be forwarded to other clients
@@ -13,19 +11,21 @@ type Room struct {
 	leave chan *Client
 	// clients holds all current clients in this room.
 	clients map[*Client]bool
-	// tracer will receive trace information of activity in the room.
-	// avatar is how avatar information will be obtained.
-	//avatar Avatar
-	room *models.RoomModel
+	// track number of clients present
+	Nclients int
+	// how to get extra room info
+	DataFinder
 }
 
-func NewRoom(room *models.RoomModel) *Room {
+// we need room name, id
+
+func NewRoom(df DataFinder) *Room {
 	return &Room{
-		forward: make(chan *message),
-		join:    make(chan *Client),
-		leave:   make(chan *Client),
-		clients: make(map[*Client]bool),
-		room:    room,
+		forward:    make(chan *message),
+		join:       make(chan *Client),
+		leave:      make(chan *Client),
+		clients:    make(map[*Client]bool),
+		DataFinder: df,
 	}
 }
 
@@ -36,12 +36,14 @@ func (r *Room) Run() {
 		case client := <-r.join:
 			// joining
 			r.clients[client] = true
+			r.Nclients++
 			msg := generateAdminMessage(client, NEW_USER)
 			r.sendMessageToClient(client, msg)
 			msg = generateAdminMessage(client, USER_JOINED)
 			r.sendMessageToClientsExcept(client, msg)
 		case client := <-r.leave:
 			// leaving
+			r.Nclients--
 			delete(r.clients, client)
 			close(client.send)
 			r.sendMessageToClientsExcept(client, generateAdminMessage(client, USER_LEFT))
@@ -51,14 +53,11 @@ func (r *Room) Run() {
 				client.send <- msg
 			}
 		}
+		// if no more client present stop the room.
+		if r.Nclients < 1 {
+			return
+		}
 	}
-}
-
-func (r *Room) GetRoomModel() *models.RoomModel {
-	if r.room == nil {
-		return nil
-	}
-	return r.room
 }
 
 func (r *Room) CountClients() int {
@@ -66,19 +65,17 @@ func (r *Room) CountClients() int {
 	for c := range r.clients {
 		clients = append(clients, c)
 	}
-	return len(clients)
+	r.Nclients = len(clients)
+	return r.Nclients
 }
 
 func (r *Room) AddClient(client *Client) {
+	// find client, if present remove
+	if c := r.FindClient(client.DataFinder.GetIntID()); c != nil {
+		r.RemoveClient(c)
+	}
 	client.room = r
-	for c, v := range r.clients {
-		if c.user.ID == client.user.ID && v {
-			r.RemoveClient(c)
-		}
-	}
-	if _, ok := r.clients[client]; !ok {
-		r.join <- client
-	}
+	r.join <- client
 }
 
 func (r *Room) RemoveClient(client *Client) {
@@ -87,9 +84,9 @@ func (r *Room) RemoveClient(client *Client) {
 	}
 }
 
-func (r *Room) FindClient(id uint) *Client {
-	for client := range r.clients {
-		if client.user.ID == id {
+func (r *Room) FindClient(id int) *Client {
+	for client, _ := range r.clients {
+		if client.DataFinder.GetIntID() == id {
 			return client
 		}
 	}

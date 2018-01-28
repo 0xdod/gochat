@@ -17,7 +17,7 @@ type message struct {
 	Message   string    `json:"message,omitempty"`
 	When      time.Time `json:"when,omitempty"`
 	AvatarURL string    `json:"avatarURL,omitempty"`
-	UserID    uint      `json:"userID,omitempty"`
+	UserID    int       `json:"userID,omitempty"`
 }
 
 func NewMessage(to, from *Client, content string) *message {
@@ -25,12 +25,12 @@ func NewMessage(to, from *Client, content string) *message {
 	if from == nil {
 		msg.From = "Admin"
 	} else {
-		msg.From = from.user.Nickname
-		msg.UserID = from.user.ID
-		msg.AvatarURL = from.user.AvatarURL
+		msg.From = from.GetName()
+		msg.UserID = from.GetIntID()
+		msg.AvatarURL = from.GetAvatarURL()
 	}
 	if to != nil {
-		msg.To = to.user.Nickname
+		msg.To = to.GetName()
 	}
 	msg.Message = content
 	msg.When = time.Now()
@@ -39,13 +39,8 @@ func NewMessage(to, from *Client, content string) *message {
 
 func generateAdminMessage(c *Client, info string) *message {
 	var msg string
-	var roomName string
-	username := c.user.Nickname
-	if c.room.room == nil {
-		roomName = "default"
-	} else {
-		roomName = c.room.room.Name
-	}
+	roomName := c.room.GetName()
+	username := c.GetName()
 	switch info {
 	case NEW_USER:
 		msg = "/Hello " + username + ", Welcome to the " + roomName + " chat room."
