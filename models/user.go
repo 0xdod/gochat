@@ -13,9 +13,8 @@ type UserModel struct {
 	Email     string `gorm:"not null;unique_index"`
 	Password  string
 	AvatarURL string
+	Rooms     []*RoomModel `gorm:"many2many:room_participants"`
 }
-
-type filter map[string]interface{}
 
 // UserService is responsible for enabling communication between the model
 // and the handlers
@@ -26,6 +25,7 @@ type UserService interface {
 	Create(user *UserModel) error
 	Update(user *UserModel) error
 	Delete(id uint) error
+	GetRooms(*UserModel) []*RoomModel
 }
 
 // UserGorm reads and writes directly to the database
@@ -33,12 +33,8 @@ type UserGorm struct {
 	*gorm.DB
 }
 
-func NewUserGorm(connInfo string) (*UserGorm, error) {
-	db, err := gorm.Open("postgres", connInfo)
-	if err != nil {
-		return nil, err
-	}
-	return &UserGorm{db}, nil
+func NewUserGorm(db *gorm.DB) *UserGorm {
+	return &UserGorm{db}
 }
 
 func (ug *UserGorm) FindByID(id uint) *UserModel {
@@ -60,6 +56,11 @@ func (ug *UserGorm) Update(user *UserModel) error {
 func (ug *UserGorm) Delete(id uint) error {
 	user := ug.FindByID(id)
 	return ug.DB.Delete(user).Error
+}
+func (ug *UserGorm) GetRooms(u *UserModel) []*RoomModel {
+	var rooms []*RoomModel
+	ug.DB.Model(u).Association("Rooms").Find(&rooms)
+	return rooms
 }
 
 func (ug *UserGorm) byQuery(query *gorm.DB) *UserModel {

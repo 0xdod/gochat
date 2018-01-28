@@ -1,28 +1,30 @@
 {{ define "title" }}Join a room to meet people and start chatting {{ end }}
 
 {{ define "content" }}
-
+<div class="container">
 <h1>Available rooms</h1>
-{{ if .payload.rooms }}
-<ul>
-  {{ range .payload.rooms }}
-	<li>{{ .room.Name }}</li>
-  {{ end}}
-</ul>
+{{ if .rooms }}
+  {{ template "partials/rooms_list" .rooms }}
 {{else}}
 <p>No room available, please create one below!</p>
+{{ end }}
+
+{{ if .MyRooms }}
+  <p>Your rooms</p>
+  {{ template "partials/rooms_list" .MyRooms }}
 {{ end }}
  
 <h2>Create a room</h2>
 <form action="" method="POST">
 	<div class="form-group">
 		<label for="name">Name</label>
-		<input type="text" placeholder="Enter room's name" required>
+		<input type="text" name="name" placeholder="Enter room's name" required>
 	</div>
 	<div class="form-group">
 		<label for="description">Description</label>
-		<input type="text" placeholder="room's description">
+		<input type="text" name="description" placeholder="room's description">
 	</div>
-	<button>Join</button>
+	<button>Create</button>
 </form>
+</div>
 {{ end }}

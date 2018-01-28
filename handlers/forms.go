@@ -22,6 +22,12 @@ type SignupForm struct {
 	Password2 string `schema:"password2"`
 }
 
+type CreateRoomForm struct {
+	Name        string `schema:"name"`
+	Description string `schema:"description"`
+	AvatarURL   string `schema:"omitempty"`
+}
+
 func parseForm(r *http.Request, form interface{}) error {
 	err := r.ParseForm()
 	if err != nil {

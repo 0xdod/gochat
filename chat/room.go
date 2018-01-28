@@ -1,9 +1,9 @@
 package chat
 
+import "github.com/fibreactive/chat/models"
+
 //type room models a single chat room
 type Room struct {
-	//used to id a room
-	name string
 	//forward is a channel that holds incoming messages that should be forwarded to other clients
 	forward chan *message
 	//broadcast is a channel that holds incoming messages that should be forwarded to other clients except the sender
@@ -16,15 +16,16 @@ type Room struct {
 	// tracer will receive trace information of activity in the room.
 	// avatar is how avatar information will be obtained.
 	//avatar Avatar
+	room *models.RoomModel
 }
 
-func NewRoom(name string) *Room {
+func NewRoom(room *models.RoomModel) *Room {
 	return &Room{
-		name:    name,
 		forward: make(chan *message),
 		join:    make(chan *Client),
 		leave:   make(chan *Client),
 		clients: make(map[*Client]bool),
+		room:    room,
 	}
 }
 
@@ -53,8 +54,28 @@ func (r *Room) Run() {
 	}
 }
 
+func (r *Room) GetRoomModel() *models.RoomModel {
+	if r.room == nil {
+		return nil
+	}
+	return r.room
+}
+
+func (r *Room) CountClients() int {
+	var clients []*Client
+	for c := range r.clients {
+		clients = append(clients, c)
+	}
+	return len(clients)
+}
+
 func (r *Room) AddClient(client *Client) {
 	client.room = r
+	for c, v := range r.clients {
+		if c.user.ID == client.user.ID && v {
+			r.RemoveClient(c)
+		}
+	}
 	if _, ok := r.clients[client]; !ok {
 		r.join <- client
 	}

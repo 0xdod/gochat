@@ -1,50 +1,93 @@
 package models
 
 import (
+	"bytes"
+	"encoding/base64"
+	"strconv"
+	"strings"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 type RoomModel struct {
 	gorm.Model
-	Name        string `gorm:"not null;unique_index"`
+	Name        string `gorm:"not null;"`
 	Description string
-	Users       []UserModel `gorm:"many2many:room_participants"`
+	Link        string       `gorm:"not null;unique_index"`
+	Users       []*UserModel `gorm:"many2many:room_participants"`
+	Admins      []*UserModel `gorm:"many2many:room_admins"`
+	AvatarURL   string
 }
 
+func CreateLink(rm *RoomModel) string {
+	id := strconv.Itoa(int(rm.ID))
+	buf := &bytes.Buffer{}
+	wc := base64.NewEncoder(base64.URLEncoding, buf)
+	wc.Write([]byte(id + ":" + rm.Name))
+	defer wc.Close()
+	return buf.String()
+}
+
+func (rm *RoomModel) AfterCreate(tx *gorm.DB) (err error) {
+	l := CreateLink(rm)
+	return tx.Model(rm).Update("link", l).Error
+}
+
+func RoomIDFromLink(s string) int {
+	reader := strings.NewReader(s)
+	decoder := base64.NewDecoder(base64.URLEncoding, reader)
+	p := make([]byte, reader.Len())
+	decoder.Read(p)
+	s = string(p)
+	ss := strings.Split(s, ":")
+	id, _ := strconv.Atoi(ss[0])
+	return id
+}
+
+type Map map[string]interface{}
+
 type RoomService interface {
-	All() []*RoomModel
+	GetAll() []*RoomModel
+	FindMany(Map) []*RoomModel
 	FindByID(id uint) *RoomModel
-	FindByName(name string) *RoomModel
+	FindByLink(string) *RoomModel
 	Create(room *RoomModel) error
 	Update(room *RoomModel) error
 	Delete(id uint) error
+	GetAdmins(*RoomModel) []*UserModel
+	GetParticipants(*RoomModel) []*UserModel
+	AddParticipant(*RoomModel, *UserModel) error
+	RemoveParticipant(*RoomModel, *UserModel) error
 }
 
 type RoomGorm struct {
 	*gorm.DB
 }
 
-func NewRoomGorm(connInfo string) (*RoomGorm, error) {
-	db, err := gorm.Open("postgres", connInfo)
-	if err != nil {
-		return nil, err
-	}
-	return &RoomGorm{db}, nil
+func NewRoomGorm(db *gorm.DB) *RoomGorm {
+	return &RoomGorm{db}
 }
 
-func (rg *RoomGorm) All() []RoomModel {
-	var rm []RoomModel
+func (rg *RoomGorm) GetAll() []*RoomModel {
+	var rm []*RoomModel
 	rg.DB.Find(&rm)
 	return rm
+}
+
+func (rg *RoomGorm) FindByLink(s string) *RoomModel {
+	id := RoomIDFromLink(s)
+	return rg.FindByID(uint(id))
 }
 
 func (rg *RoomGorm) FindByID(id uint) *RoomModel {
 	return rg.byQuery(rg.DB.Where("id = ?", id))
 }
 
-func (rg *RoomGorm) FindByName(name string) *RoomModel {
-	return rg.byQuery(rg.DB.Where("name = ?", name))
+func (rg *RoomGorm) FindMany(m Map) []*RoomModel {
+	var rm []*RoomModel
+	rg.DB.Where(m).Find(&rm)
+	return rm
 }
 
 func (rg *RoomGorm) Create(room *RoomModel) error {
@@ -60,6 +103,35 @@ func (rg *RoomGorm) Delete(id uint) error {
 	return rg.DB.Delete(room).Error
 }
 
+func (rg *RoomGorm) GetParticipants(r *RoomModel) []*UserModel {
+	var users []*UserModel
+	rg.DB.Model(r).Association("Users").Find(&users)
+	return users
+}
+
+func (rg *RoomGorm) AddParticipant(room *RoomModel, u *UserModel) error {
+	return rg.DB.Model(room).Association("Users").Append(u).Error
+}
+
+func (rg *RoomGorm) RemoveParticipant(room *RoomModel, u *UserModel) error {
+	return rg.DB.Model(room).Association("Users").Delete(u).Error
+}
+
+func (rg *RoomGorm) GetAdmins(r *RoomModel) []*UserModel {
+	var users []*UserModel
+	rg.DB.Model(r).Association("Admins").Find(&users)
+	return users
+}
+
+func (rg *RoomGorm) DestructiveReset() {
+	rg.DropTableIfExists(&RoomModel{})
+	rg.AutoMigrate()
+}
+
+func (rg *RoomGorm) AutoMigrate() {
+	rg.DB.AutoMigrate(&RoomModel{})
+}
+
 func (rg *RoomGorm) byQuery(query *gorm.DB) *RoomModel {
 	room := &RoomModel{}
 	err := query.First(room).Error
@@ -71,13 +143,4 @@ func (rg *RoomGorm) byQuery(query *gorm.DB) *RoomModel {
 	default:
 		panic(err)
 	}
-}
-
-func (rg *RoomGorm) DestructiveReset() {
-	rg.DropTableIfExists(&RoomModel{})
-	rg.AutoMigrate()
-}
-
-func (rg *RoomGorm) AutoMigrate() {
-	rg.DB.AutoMigrate(&RoomModel{})
 }

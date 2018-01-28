@@ -2,12 +2,9 @@ package chat
 
 //Defines a client using the chat app
 import (
-	"time"
-
 	"github.com/fibreactive/chat/models"
 
 	"github.com/gorilla/websocket"
-	uuid "github.com/satori/go.uuid"
 )
 
 const (
@@ -17,7 +14,6 @@ const (
 
 //client represents a single chatting user
 type Client struct {
-	id string
 	//represents a socket connection for a single user
 	socket *websocket.Conn
 	//send is a buffered channel through which messages are sent
@@ -30,7 +26,6 @@ type Client struct {
 
 func NewClient(s *websocket.Conn, user *models.UserModel) *Client {
 	return &Client{
-		id:     uuid.Must(uuid.NewV4()).String(),
 		socket: s,
 		send:   make(chan *message, MessageBufferSize),
 		user:   user,
@@ -41,16 +36,10 @@ func NewClient(s *websocket.Conn, user *models.UserModel) *Client {
 func (c *Client) Read() {
 	defer c.socket.Close()
 	for {
-		msg := &message{}
-		err := c.socket.ReadJSON(msg)
+		msg := NewMessage(nil, c, "")
+		err := c.socket.ReadJSON(&msg)
 		if err != nil {
 			return
-		}
-		msg.When = time.Now()
-		msg.From = c.user.Nickname
-		if c.user.AvatarURL != "" {
-			// check might not be needed
-			msg.AvatarURL = c.user.AvatarURL
 		}
 		c.room.forward <- msg
 	}

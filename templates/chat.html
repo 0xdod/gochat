@@ -1,102 +1,135 @@
 {{ define "title" }} Chat {{ end }}
+{{ define "stylesheets"}}<link rel="stylesheet" href="/public/stylesheets/chat.css" />{{ end }}
 
-{{ define "stylesheets"}}
-<link rel="stylesheet" href="/public/stylesheets/chat.css">
-{{ end }}
+{{ define "content" }} {{ if not .room }}
+<div>
+  <p>
+    Invalid link, please
+    <a href="/">create a new chat room or join an existing one</a>.
+  </p>
+</div> {{ else }}
+<div class="sidebar">
+  <div class="user-info header">
+    <h1>My Rooms</h1>
+  </div>
+  <div class="main">
+    {{ if .MyRooms }} {{ template "partials/rooms_list_sidebar" . }} {{end}}
+  </div>
+</div>
 
-{{ define "content" }}
-<h1>Hey, let's Chat</h1>
-<div class="container">
-  <div class="card">
-    <div class="card-body">
+<div class="chatarea">
+  <div class="header">
+    <div class="room-image"></div>
+    <div class="room-info"></div>
+    <a href="/logout">Sign out</a>
+    <button id="leave-room">Leave room</button>
+  </div>
+
+  <div class="main">
+    <div class="messages-container">
       <ul id="messages"></ul>
     </div>
+
+    <form class="chatform" id="chatbox" role="form">
+      <input type="text" id="message" />
+      <button type="submit" class="btn btn-light" disabled>Send</button>
+    </form>
   </div>
-  <form id="chatbox" role="form">
-    <div class="form-group">
-      <label for="message">Send a message as {{.UserData.name}} </label>
-      or
-      <a href="/logout">Sign out</a>
-      <textarea id="message" class="form-control"></textarea>
-    </div>
-    <button type="submit" class="btn btn-light">Send</button>
-  </form>
-  <button id="leave-room">Leave room</button>
 </div>
-{{ end}}
+{{ end }} {{ end }} 
 
 {{ define "scripts" }}
 <script>
   $(function () {
     var socket = null;
-    var msgBox = $("#chatbox textarea");
-    var messages = $("#messages");
-    $("#chatbox").submit(function () {
+    var msgBox = $('#chatbox input');
+    var messages = $('#messages');
+    var sendButton = $('#chatbox button');
+    msgBox.on('focusin focusout input', function (e) {
+      if (!e.target.value) {
+        sendButton.attr('disabled', 'disabled');
+      } else {
+        sendButton.removeAttr('disabled');
+      }
+    });
+    $('#chatbox').submit(function () {
       if (!msgBox.val()) return false;
       if (!socket) {
-        alert("Error: There is no socket connection.");
+        alert('Error: There is no socket connection.');
         return false;
       }
       socket.send(JSON.stringify({ message: msgBox.val() }));
-      msgBox.val("");
+      msgBox.val('');
       return false;
     });
-    if (!window["WebSocket"]) {
-      alert("Error: Your browser does not support web sockets.");
+    if (!window['WebSocket']) {
+      alert('Error: Your browser does not support web sockets.');
     } else {
-      socket = new WebSocket("ws://{{.Host}}/room");
+      socket = new WebSocket('ws://{{.Host}}/r/{{ .room.ID }}');
       socket.onclose = function () {
-        alert("Connection has been closed.");
+        alert('Connection has been closed.');
       };
       socket.onmessage = function (e) {
+        var message = $("<li class='message'>")
         var msg = JSON.parse(e.data);
         var time = new Date(msg.when);
-        var formattedTime = moment(msg.when).format("h:mm a");
-        var rawText = msg.message
-        var $msgText = $("<span>")
-        if (rawText.startsWith("/")){
-          msg.message = rawText.substring(1)
-          $msgText = $("<strong>")
-        }else if (rawText.startsWith("_") && rawText.endsWith("_")){
-          msg.message = rawText.substring(1, rawText.length -1)
-          $msgText = $("<em>")
-        }else if (rawText.startsWith("*") && rawText.endsWith("*")){
-          msg.message = rawText.substring(1, rawText.length -1)
-          $msgText = $("<strong>")
-        }else if (rawText.startsWith("~") && rawText.endsWith("~")){
-          msg.message = rawText.substring(1, rawText.length -1)
-          $msgText = $("<del>")
+        var formattedTime = moment(msg.when).format('h:mm a');
+        var rawText = msg.message;
+        var $msgText = $('<span>');
+        if (rawText.startsWith('/')) {
+          msg.message = rawText.substring(1);
+          $msgText = $('<strong>');
+        } else if (rawText.startsWith('_') && rawText.endsWith('_')) {
+          msg.message = rawText.substring(1, rawText.length - 1);
+          $msgText = $('<em>');
+        } else if (rawText.startsWith('*') && rawText.endsWith('*')) {
+          msg.message = rawText.substring(1, rawText.length - 1);
+          $msgText = $('<strong>');
+        } else if (rawText.startsWith('~') && rawText.endsWith('~')) {
+          msg.message = rawText.substring(1, rawText.length - 1);
+          $msgText = $('<del>');
+        }
+        var userID = {{ .user.ID }}
+        if (parseInt(userID) === parseInt(msg.userID)) {
+          message.addClass("my-message")
+        }
+        if (msg.from === "Admin"){
+          message.addClass("admin-message")
         }
         messages.append(
-          $("<li class='message'>").append(
-            $("<img>")
-              .attr("title", msg.from)
+          message.append(
+            $('<img>')
+              .attr('title', msg.from)
               .css({
-                borderRadius: "50%",
+                borderRadius: '50%',
                 width: 50,
-                verticalAlign: "middle",
+                verticalAlign: 'middle',
               })
-              .attr("src", msg.avatarURL),
-              $('<div>').addClass('message__title').append(
-                $("<strong>").text(msg.from),
-                 $("<span>").text(" " + formattedTime)
-                ),
-            $('<div>').addClass('message__body').append(
-              $msgText.text(msg.message),
-            ),
+              .attr('src', msg.avatarURL),
+            $('<div>')
+              .addClass('message__title')
+              .append(
+                $('<strong>').text(msg.from),
+                $('<span>').text(formattedTime)
+              ),
+            $('<div>')
+              .addClass('message__body')
+              .append($msgText.text(msg.message))
           )
         );
       };
     }
   });
 </script>
+
 <script>
-  $(function(){
-    $('#leave-room').on('click', function(e){
-      $.post('/leave').done(function(){
-        alert('You have been removed')
-      })
-    })
-  })
+  $(function () {
+    $('#leave-room').on('click', function (e) {
+      $.post('/r/leave/{{ .room.ID }}').done(function () {
+        alert('You have been removed');
+        window.location.href = '/';
+      });
+    });
+  });
 </script>
 {{ end }}

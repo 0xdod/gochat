@@ -1,25 +1,87 @@
 body {
-	font: 16px Helvetica, Arial;
+	font: 1.6rem Helvetica, Arial;
+	display: flex;
+	height: 100vh;
 }
-form {
-	background: #000;
-	padding: 3px;
-	position: fixed;
-	bottom: 0;
-	width: 100%;
+
+.my-message {
+	text-align: right;
 }
-form input {
+.admin-message {
+  font-size: 1rem;
+  font-style: italic;
+}
+.sidebar {
+	width: 20%;
+	display: flex;
+	flex-direction: column;
+}
+.header {
+	display: flex;
+	height: 7%;
+	padding: 1rem;
+}
+
+.sidebar li {
+	margin-bottom: 0.5rem;
+	list-style: none;
+}
+.sidebar  li a{
+	padding: 1rem;
 	display: block;
-	border: 0;
-	padding: 10px;
-	width: 90%;
-	margin-right: 0.5%;
 }
-form button {
-	width: 9%;
+.sidebar li a:hover{
+	background-color: #999;
+}
+
+.sidebar li .selected {
+    background: blue;
+}
+.main {
+	display: flex;
+	height: 93%;
+	flex-direction: column;
+	padding: 1rem;
+	border: 1px solid #eee;
+}
+.chatarea {
+	width: 80%;
+	display: flex;
+	flex-direction: column;
+}
+
+.chatarea .header button {
+   margin-left: auto;
+}
+
+.chatarea .main{
+	
+}
+
+.messages-container {
+   padding: 1.2rem;
+   overflow-y: scroll;
+   height: 90%;
+}
+
+.chatform {
+	background: #000;
+	padding: 1.2rem;
+	width: 100%;
+	display: flex;
+
+}
+.chatform input {
+	display: block;
+	margin-right: 0.5rem;
+	border: 0;
+	width: 90%;
+	padding: 1.2rem;
+}
+.chatform button {
+	width: 10%;
 	background: rgb(130, 224, 255);
 	border: none;
-	padding: 10px;
 }
 #messages {
 	list-style-type: none;
@@ -27,28 +89,49 @@ form button {
 	padding: 0;
 }
 #messages li {
-	padding: 5px 10px;
-	margin-bottom: 2px;
+	padding: 0.5rem 1rem;
+	margin-bottom: 0.2rem;
 }
 #messages li:nth-child(odd) {
 	background: #eee;
 }
 
-ul#messages li img {
-	margin-right: 10px;
+#messages li img {
+	margin-right: 1rem;
 }
 
 .message {
-  padding: 10px;
+  padding: 1rem;
 }
 .message__title {
-  display: flex;
-  margin-bottom: 5px;
+  margin-bottom: 0.5rem;
 }
-.message__title h4 {
-  font-weight: 600;
-  margin-right: 10px;
-}
+
 .message__title span {
   color: #999;
+  font-style: italic;
+  font-size: 1.4rem; 
+  padding: 0, 1.2rem;
+  margin-left: 1.2rem;
+}
+
+@media (max-width: 45rem) {
+	.sidebar {
+		display: none;
+	}
+	.chatarea {
+		width: 100%;
+	}
+	.chatform {
+		flex-direction: column;
+	}
+	.chatform button {
+		width: 100%;
+		margin-top: 0.5rem;
+	}
+
+	.chatform input {
+		width: 100%;
+		margin: 0;
+	}
 }

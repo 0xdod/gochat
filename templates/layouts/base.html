@@ -9,23 +9,9 @@
 			href="/public/stylesheets/bootstrap/bootstrap.min.css"
 			rel="stylesheet"
 		/>
+		<link rel="stylesheet" href="/public/stylesheets/base.css">
 		{{ block "stylesheets" .}} {{end}}
-		{{ block "styles" .}}
-		<style>
-			input {
-				display: block;
-			}
-			ul#messages {
-				list-style: none;
-			}
-			ul#messages li {
-				margin-bottom: 2px;
-			}
-			ul#messages li img {
-				margin-right: 10px;
-			}
-		</style>
-		{{ end }}
+		{{ block "inline_styles" .}} {{ end }}
 	</head>
 	<body>
 		{{ block "content" . }}

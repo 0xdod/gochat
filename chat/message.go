@@ -1,6 +1,8 @@
 package chat
 
-import "time"
+import (
+	"time"
+)
 
 const (
 	NEW_USER    = "welcome"
@@ -15,26 +17,35 @@ type message struct {
 	Message   string    `json:"message,omitempty"`
 	When      time.Time `json:"when,omitempty"`
 	AvatarURL string    `json:"avatarURL,omitempty"`
-	ClientID  string    `json:"clientID,omitempty"`
+	UserID    uint      `json:"userID,omitempty"`
 }
 
-func NewMessage(to *Client, from, body string) *message {
-	msg := &message{
-		From:    from,
-		Message: body,
-		When:    time.Now(),
+func NewMessage(to, from *Client, content string) *message {
+	msg := &message{}
+	if from == nil {
+		msg.From = "Admin"
+	} else {
+		msg.From = from.user.Nickname
+		msg.UserID = from.user.ID
+		msg.AvatarURL = from.user.AvatarURL
 	}
 	if to != nil {
 		msg.To = to.user.Nickname
-		msg.ClientID = to.id
 	}
+	msg.Message = content
+	msg.When = time.Now()
 	return msg
 }
 
 func generateAdminMessage(c *Client, info string) *message {
 	var msg string
+	var roomName string
 	username := c.user.Nickname
-	roomName := c.room.name
+	if c.room.room == nil {
+		roomName = "default"
+	} else {
+		roomName = c.room.room.Name
+	}
 	switch info {
 	case NEW_USER:
 		msg = "/Hello " + username + ", Welcome to the " + roomName + " chat room."
@@ -43,5 +54,5 @@ func generateAdminMessage(c *Client, info string) *message {
 	case USER_LEFT:
 		msg = "/" + username + " has left!."
 	}
-	return NewMessage(nil, "Admin", msg)
+	return NewMessage(nil, nil, msg)
 }
