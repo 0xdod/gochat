@@ -1,0 +1,38 @@
+{{ define "base" }}<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+		<title>{{ block "title" . }} Chatupp! {{ end }}</title>
+		<link
+			href="/public/stylesheets/bootstrap/bootstrap.min.css"
+			rel="stylesheet"
+		/>
+		{{ block "styles" .}}
+		<style>
+			input {
+				display: block;
+			}
+			ul#messages {
+				list-style: none;
+			}
+			ul#messages li {
+				margin-bottom: 2px;
+			}
+			ul#messages li img {
+				margin-right: 10px;
+			}
+		</style>
+		{{ end }}
+	</head>
+	<body>
+		{{ block "content" . }}
+		    <p>This is default</p>
+		{{ end }}
+		<script src="/public/js/lib/jquery.min.js"></script>
+		<script src="/public/js/lib/bootstrap/bootstrap.min.js"></script>
+		{{block "scripts" .}} {{ end }}
+	</body>
+</html>
+{{ end }}

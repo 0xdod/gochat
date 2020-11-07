@@ -1,0 +1,65 @@
+{{ define "title" }} Chat {{ end }} {{ define "content" }}
+<h1>Hey, let's Chat</h1>
+<div class="container">
+  <div class="card">
+    <div class="card-body">
+      <ul id="messages"></ul>
+    </div>
+  </div>
+  <form id="chatbox" role="form">
+    <div class="form-group">
+      <label for="message">Send a message as {{.UserData.name}} </label>
+      or
+      <a href="/logout">Sign out</a>
+      <textarea id="message" class="form-control"></textarea>
+    </div>
+    <input type="submit" value="Send" class="btn btn-light" />
+  </form>
+</div>
+{{ end}} {{ define "scripts" }}
+<script>
+  $(function () {
+    var socket = null;
+    var msgBox = $("#chatbox textarea");
+    var messages = $("#messages");
+    $("#chatbox").submit(function () {
+      if (!msgBox.val()) return false;
+      if (!socket) {
+        alert("Error: There is no socket connection.");
+        return false;
+      }
+      socket.send(JSON.stringify({ message: msgBox.val() }));
+      msgBox.val("");
+      return false;
+    });
+    if (!window["WebSocket"]) {
+      alert("Error: Your browser does not support web sockets.");
+    } else {
+      socket = new WebSocket("ws://{{.Host}}/room");
+      socket.onclose = function () {
+        alert("Connection has been closed.");
+      };
+      socket.onmessage = function (e) {
+        var msg = JSON.parse(e.data);
+        var time = new Date(msg.when);
+        messages.append(
+          $("<li>").append(
+            $("<img>")
+              .attr("title", msg.name)
+              .css({
+                borderRadius: "50%",
+                width: 50,
+                verticalAlign: "middle",
+              })
+              .attr("src", msg.avatarURL),
+            $("<strong>").text(msg.name + ": "),
+            $("<span>").text(msg.message),
+            $("i"),
+            $("<small>").text(" " + time.toUTCString())
+          )
+        );
+      };
+    }
+  });
+</script>
+{{ end }}

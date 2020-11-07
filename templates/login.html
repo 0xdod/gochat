@@ -1,0 +1,52 @@
+{{ define "title" }}Login{{ end }}
+
+{{ define "content" }}
+<div class="container">
+	<div class="page-header mt-2">
+		<h1>Sign in</h1>
+	</div>
+	<hr />
+	<div class="card">
+		<div class="card-header">
+			<h3 class="card-title text-danger">
+				In order to chat, you must be signed in
+			</h3>
+		</div>
+		<div class="card-body">
+			<div>
+				<form method="POST">
+					<div class="form-group">
+						<label for="email">Email</label>
+						<input type="email" name="email" class="form-control" />
+					</div>
+					<div class="form-group">
+						<label for="password">Password</label>
+						<input
+							type="password"
+							name="password"
+							class="form-control"
+							required
+						/>
+					</div>
+					<button class="btn btn-primary">Login</button>
+				</form>
+			</div>
+
+			<div>
+				<p>Select the service you would like to sign in with:</p>
+				<ul>
+					<li>
+						<a href="/auth/login/facebook">Facebook</a>
+					</li>
+					<li>
+						<a href="/auth/login/github">GitHub</a>
+					</li>
+					<li>
+						<a href="/auth/login/google">Google</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>
+{{ end }}
