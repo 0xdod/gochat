@@ -17,7 +17,7 @@ func MapRoutes(r *mux.Router) {
 	r.Handle("/login", userHandler).Methods("POST")
 	r.Handle("/signup", userHandler).Methods("POST")
 	r.Handle("/upload", h.MustAuth(h.HandlePage("upload.html"))).Methods("GET")
-	r.Handle("/room", h.MustAuth(room))
+	r.Handle("/room", h.MustAuth(roomHandler))
 	r.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{
 			Name:    "auth",

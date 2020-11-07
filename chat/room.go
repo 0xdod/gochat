@@ -1,21 +1,13 @@
 package chat
 
 import (
-	"log"
-	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/stretchr/objx"
-)
-
-const (
-	socketBufferSize  = 1024
-	messageBufferSize = 256
 )
 
 //type room models a single chat room
-type room struct {
+type Room struct {
 	//used to id a room
 	name string
 	//forward is a channel that holds incoming messages that should be forwarded to other clients
@@ -23,47 +15,55 @@ type room struct {
 	//broadcast is a channel that holds incoming messages that should be forwarded to other clients except the sender
 	broadcast chan *message
 	// join is a channel for clients wishing to join the room.
-	join chan *client
+	join chan *Client
 	// leave is a channel for clients wishing to leave the room.
-	leave chan *client
+	leave chan *Client
 	// clients holds all current clients in this room.
-	clients map[*client]bool
+	clients map[*Client]bool
 	// tracer will receive trace information of activity in the room.
 	// avatar is how avatar information will be obtained.
 	//avatar Avatar
 }
 
 // newRoom makes a new room.
-func NewRoom() *room {
-	return &room{
+func NewRoom() *Room {
+	return &Room{
 		forward:   make(chan *message),
 		broadcast: make(chan *message, 1),
-		join:      make(chan *client),
-		leave:     make(chan *client),
-		clients:   make(map[*client]bool),
+		join:      make(chan *Client),
+		leave:     make(chan *Client),
+		clients:   make(map[*Client]bool),
 	}
 }
 
-func CreateRoom(name string) *room {
-	return &room{
+func CreateRoom(name string) *Room {
+	return &Room{
 		name:      name,
 		forward:   make(chan *message),
 		broadcast: make(chan *message, 1),
-		join:      make(chan *client),
-		leave:     make(chan *client),
-		clients:   make(map[*client]bool),
+		join:      make(chan *Client),
+		leave:     make(chan *Client),
+		clients:   make(map[*Client]bool),
 	}
 }
 
 //operation of the chat room
-func (r *room) Run() {
+func (r *Room) Run() {
 	for {
 		select {
 		case client := <-r.join:
 			// joining
 			r.clients[client] = true
+			msgBody := client.userData["name"].(string) + ", welcome to " + client.room.name + " chat room"
+			id := client.userData["userid"].(string)
+			client.send <- adminWelcomeMessage(msgBody)
+			msgBody = client.userData["name"].(string) + " has joined!"
+			r.broadcast <- adminBroadcastMessage(id, msgBody)
 		case client := <-r.leave:
 			// leaving
+			msgBody := client.userData["name"].(string) + " has left"
+			id := client.userData["userid"].(string)
+			r.broadcast <- adminBroadcastMessage(id, msgBody)
 			delete(r.clients, client)
 			close(client.send)
 		case msg := <-r.forward:
@@ -86,34 +86,35 @@ func (r *room) Run() {
 	}
 }
 
-//To get a web socket connection
-var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBufferSize: socketBufferSize}
-
-func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	socket, err := upgrader.Upgrade(w, req, nil)
-	if err != nil {
-		log.Fatal("ServeHTTP:", err)
-		return
-	}
-	authCookie, err := req.Cookie("auth")
-	if err != nil {
-		log.Fatal("Failed to get auth cookie:", err)
-	}
-	client := &client{
-		socket:   socket,
-		send:     make(chan *message, messageBufferSize),
+func (r *Room) AddClient(s *websocket.Conn, data map[string]interface{}) *Client {
+	client := &Client{
+		socket:   s,
 		room:     r,
-		userData: objx.MustFromBase64(authCookie.Value),
-	}
-	newUserMsg := &message{
-		Name:    "Admin",
-		UserID:  client.userData["userid"].(string),
-		Message: client.userData["name"].(string) + " just joined!",
-		When:    time.Now(),
+		userData: data,
+		send:     make(chan *message, MessageBufferSize),
 	}
 	r.join <- client
-	r.broadcast <- newUserMsg
-	defer func() { r.leave <- client }()
-	go client.write()
-	client.read()
+	return client
+}
+
+func (r *Room) RemoveClient(client *Client) {
+	r.leave <- client
+}
+
+func adminBroadcastMessage(userId, msg string) *message {
+	return &message{
+		UserID:  userId,
+		Name:    "Admin",
+		Message: msg,
+		When:    time.Now(),
+	}
+}
+
+func adminWelcomeMessage(msg string) *message {
+	return &message{
+		UserID:  "Admin",
+		Name:    "Admin",
+		Message: msg,
+		When:    time.Now(),
+	}
 }
