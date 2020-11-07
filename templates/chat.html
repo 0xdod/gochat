@@ -1,5 +1,9 @@
 {{ define "title" }} Chat {{ end }}
 
+{{ define "stylesheets"}}
+<link rel="stylesheet" href="/public/stylesheets/chat.css">
+{{ end }}
+
 {{ define "content" }}
 <h1>Hey, let's Chat</h1>
 <div class="container">
@@ -15,7 +19,7 @@
       <a href="/logout">Sign out</a>
       <textarea id="message" class="form-control"></textarea>
     </div>
-    <input type="submit" value="Send" class="btn btn-light" />
+    <button type="submit" class="btn btn-light">Send</button>
   </form>
   <button id="leave-room">Leave room</button>
 </div>
@@ -47,6 +51,21 @@
       socket.onmessage = function (e) {
         var msg = JSON.parse(e.data);
         var time = new Date(msg.when);
+        var rawText = msg.message
+        var $msgText = $("<span>")
+        if (rawText.startsWith("/")){
+          msg.message = rawText.substring(1)
+          $msgText = $("<strong>")
+        }else if (rawText.startsWith("_") && rawText.endsWith("_")){
+          msg.message = rawText.substring(1, rawText.length -1)
+          $msgText = $("<em>")
+        }else if (rawText.startsWith("*") && rawText.endsWith("*")){
+          msg.message = rawText.substring(1, rawText.length -1)
+          $msgText = $("<strong>")
+        }else if (rawText.startsWith("~") && rawText.endsWith("~")){
+          msg.message = rawText.substring(1, rawText.length -1)
+          $msgText = $("<del>")
+        }
         messages.append(
           $("<li>").append(
             $("<img>")
@@ -58,7 +77,7 @@
               })
               .attr("src", msg.avatarURL),
             $("<strong>").text(msg.from + ": "),
-            $("<span>").text(msg.message),
+            $msgText.text(msg.message),
             $("i"),
             $("<small>").text(" " + time.toUTCString())
           )
