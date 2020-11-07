@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	uuid "github.com/satori/go.uuid"
 )
 
 const (
@@ -12,17 +13,9 @@ const (
 	MessageBufferSize = 256
 )
 
-//type message is a representation of messages sent between users
-type message struct {
-	UserID    string    `json:"user_id"`
-	Name      string    `json:"name"`
-	Message   string    `json:"message"`
-	When      time.Time `json:"when"`
-	AvatarURL string    `json:"avatar_url"`
-}
-
 //client represents a single chatting user
 type Client struct {
+	id string
 	//represents a socket connection for a single user
 	socket *websocket.Conn
 	//send is a buffered channel through which messages are sent
@@ -31,6 +24,15 @@ type Client struct {
 	room *Room
 	// userData holds information about the user
 	userData map[string]interface{}
+}
+
+func NewClient(s *websocket.Conn, data map[string]interface{}) *Client {
+	return &Client{
+		id:       uuid.Must(uuid.NewV4()).String(),
+		socket:   s,
+		send:     make(chan *message, MessageBufferSize),
+		userData: data,
+	}
 }
 
 // export this one
@@ -43,8 +45,7 @@ func (c *Client) Read() {
 			return
 		}
 		msg.When = time.Now()
-		msg.Name = c.userData["name"].(string)
-		msg.UserID = c.userData["userid"].(string)
+		msg.From = c.userData["name"].(string)
 		if avatarUrl, ok := c.userData["avatar_url"]; ok {
 			// check might not be needed
 			msg.AvatarURL = avatarUrl.(string)

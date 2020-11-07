@@ -20,7 +20,7 @@ const (
 	dbname   = "chat_golang"
 )
 
-var room = chat.CreateRoom("default")
+var room = chat.NewRoom("default")
 var roomHandler = &handlers.RoomHandler{Room: room}
 var userHandler *handlers.UserHandler
 

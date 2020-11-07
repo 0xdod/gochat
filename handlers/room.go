@@ -39,6 +39,7 @@ func (rh *RoomHandler) handleLeaveRoom(w http.ResponseWriter, req *http.Request)
 func (rh *RoomHandler) handleChat(w http.ResponseWriter, req *http.Request) {
 	socket, err := upgrader.Upgrade(w, req, nil)
 	if err != nil {
+		http.NotFound(w, req)
 		log.Fatal("ServeHTTP:", err)
 		return
 	}
@@ -47,8 +48,9 @@ func (rh *RoomHandler) handleChat(w http.ResponseWriter, req *http.Request) {
 		log.Fatal("Failed to get auth cookie:", err)
 	}
 	data := objx.MustFromBase64(authCookie.Value)
-	client := rh.Room.AddClient(socket, data)
+	client := chat.NewClient(socket, data)
 	defer rh.Room.RemoveClient(client)
+	rh.Room.AddClient(client)
 	go client.Write()
 	client.Read()
 }

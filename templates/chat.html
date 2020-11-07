@@ -50,14 +50,14 @@
         messages.append(
           $("<li>").append(
             $("<img>")
-              .attr("title", msg.name)
+              .attr("title", msg.from)
               .css({
                 borderRadius: "50%",
                 width: 50,
                 verticalAlign: "middle",
               })
               .attr("src", msg.avatarURL),
-            $("<strong>").text(msg.name + ": "),
+            $("<strong>").text(msg.from + ": "),
             $("<span>").text(msg.message),
             $("i"),
             $("<small>").text(" " + time.toUTCString())

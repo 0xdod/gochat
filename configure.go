@@ -29,6 +29,6 @@ func MapRoutes(r *mux.Router) {
 			MaxAge:  -1,
 		})
 		w.Header().Set("Location", "/chat")
-		w.WriteHeader(http.StatusTemporaryRedirect)
-	}).Methods("POST")
+		w.WriteHeader(http.StatusSeeOther)
+	})
 }
