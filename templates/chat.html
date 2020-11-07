@@ -1,4 +1,6 @@
-{{ define "title" }} Chat {{ end }} {{ define "content" }}
+{{ define "title" }} Chat {{ end }}
+
+{{ define "content" }}
 <h1>Hey, let's Chat</h1>
 <div class="container">
   <div class="card">
@@ -15,8 +17,11 @@
     </div>
     <input type="submit" value="Send" class="btn btn-light" />
   </form>
+  <button id="leave-room">Leave room</button>
 </div>
-{{ end}} {{ define "scripts" }}
+{{ end}}
+
+{{ define "scripts" }}
 <script>
   $(function () {
     var socket = null;
@@ -61,5 +66,14 @@
       };
     }
   });
+</script>
+<script>
+  $(function(){
+    $('#leave-room').on('click', function(e){
+      $.post('/leave').done(function(){
+        alert('You have been removed')
+      })
+    })
+  })
 </script>
 {{ end }}

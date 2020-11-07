@@ -2,7 +2,6 @@ package chat
 
 //Defines a client using the chat app
 import (
-	"fmt"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -41,7 +40,6 @@ func (c *Client) Read() {
 		msg := &message{}
 		err := c.socket.ReadJSON(msg)
 		if err != nil {
-			fmt.Println("")
 			return
 		}
 		msg.When = time.Now()

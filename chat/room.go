@@ -25,17 +25,6 @@ type Room struct {
 	//avatar Avatar
 }
 
-// newRoom makes a new room.
-func NewRoom() *Room {
-	return &Room{
-		forward:   make(chan *message),
-		broadcast: make(chan *message, 1),
-		join:      make(chan *Client),
-		leave:     make(chan *Client),
-		clients:   make(map[*Client]bool),
-	}
-}
-
 func CreateRoom(name string) *Room {
 	return &Room{
 		name:      name,
@@ -61,16 +50,15 @@ func (r *Room) Run() {
 			r.broadcast <- adminBroadcastMessage(id, msgBody)
 		case client := <-r.leave:
 			// leaving
+			close(client.send)
+			delete(r.clients, client)
 			msgBody := client.userData["name"].(string) + " has left"
 			id := client.userData["userid"].(string)
 			r.broadcast <- adminBroadcastMessage(id, msgBody)
-			delete(r.clients, client)
-			close(client.send)
 		case msg := <-r.forward:
 			// forward message to all clients
 			for client := range r.clients {
 				client.send <- msg
-
 			}
 		case msg := <-r.broadcast:
 			// forward message to all clients except this one
@@ -80,7 +68,6 @@ func (r *Room) Run() {
 						client.send <- msg
 					}
 				}
-
 			}
 		}
 	}
@@ -93,12 +80,25 @@ func (r *Room) AddClient(s *websocket.Conn, data map[string]interface{}) *Client
 		userData: data,
 		send:     make(chan *message, MessageBufferSize),
 	}
-	r.join <- client
+	if _, ok := r.clients[client]; !ok {
+		r.join <- client
+	}
 	return client
 }
 
+func (r *Room) FindClient(id string) *Client {
+	for client := range r.clients {
+		if userID := client.userData["userid"]; userID.(string) == id {
+			return client
+		}
+	}
+	return nil
+}
+
 func (r *Room) RemoveClient(client *Client) {
-	r.leave <- client
+	if _, ok := r.clients[client]; ok {
+		r.leave <- client
+	}
 }
 
 func adminBroadcastMessage(userId, msg string) *message {

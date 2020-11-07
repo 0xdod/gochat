@@ -10,14 +10,16 @@ import (
 )
 
 func MapRoutes(r *mux.Router) {
+
 	r.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
-	r.Handle("/chat", h.MustAuth(h.HandlePage("chat.html")))
+	r.Handle("/chat", h.MustAuth(h.HandlePage("chat.html"))).Methods("GET")
+	r.Handle("/upload", h.MustAuth(h.HandlePage("upload.html"))).Methods("GET")
 	r.Handle("/signup", h.HandlePage("signup.html")).Methods("GET")
 	r.Handle("/login", h.HandlePage("login.html")).Methods("GET")
 	r.Handle("/login", userHandler).Methods("POST")
 	r.Handle("/signup", userHandler).Methods("POST")
-	r.Handle("/upload", h.MustAuth(h.HandlePage("upload.html"))).Methods("GET")
 	r.Handle("/room", h.MustAuth(roomHandler))
+	r.Handle("/leave", h.MustAuth(roomHandler)).Methods("POST")
 	r.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{
 			Name:    "auth",
@@ -28,5 +30,5 @@ func MapRoutes(r *mux.Router) {
 		})
 		w.Header().Set("Location", "/chat")
 		w.WriteHeader(http.StatusTemporaryRedirect)
-	})
+	}).Methods("POST")
 }
