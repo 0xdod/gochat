@@ -37,11 +37,11 @@ func generateAdminMessage(c *Client, info string) *message {
 	roomName := c.room.name
 	switch info {
 	case NEW_USER:
-		msg = "Hello " + username + ", Welcome to the " + roomName + " chat room."
+		msg = "/Hello " + username + ", Welcome to the " + roomName + " chat room."
 	case USER_JOINED:
-		msg = username + " has joined!."
+		msg = "/" + username + " has joined!."
 	case USER_LEFT:
-		msg = username + " has left!."
+		msg = "/" + username + " has left!."
 	}
 	return NewMessage(nil, "Admin", msg)
 }

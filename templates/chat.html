@@ -51,6 +51,7 @@
       socket.onmessage = function (e) {
         var msg = JSON.parse(e.data);
         var time = new Date(msg.when);
+        var formattedTime = moment(msg.when).format("h:mm a");
         var rawText = msg.message
         var $msgText = $("<span>")
         if (rawText.startsWith("/")){
@@ -67,7 +68,7 @@
           $msgText = $("<del>")
         }
         messages.append(
-          $("<li>").append(
+          $("<li class='message'>").append(
             $("<img>")
               .attr("title", msg.from)
               .css({
@@ -76,10 +77,13 @@
                 verticalAlign: "middle",
               })
               .attr("src", msg.avatarURL),
-            $("<strong>").text(msg.from + ": "),
-            $msgText.text(msg.message),
-            $("i"),
-            $("<small>").text(" " + time.toUTCString())
+              $('<div>').addClass('message__title').append(
+                $("<strong>").text(msg.from),
+                 $("<span>").text(" " + formattedTime)
+                ),
+            $('<div>').addClass('message__body').append(
+              $msgText.text(msg.message),
+            ),
           )
         );
       };

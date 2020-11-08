@@ -37,3 +37,18 @@ form button {
 ul#messages li img {
 	margin-right: 10px;
 }
+
+.message {
+  padding: 10px;
+}
+.message__title {
+  display: flex;
+  margin-bottom: 5px;
+}
+.message__title h4 {
+  font-weight: 600;
+  margin-right: 10px;
+}
+.message__title span {
+  color: #999;
+}
