@@ -1,13 +1,12 @@
 package handlers
 
 import (
+	"fibreactive/chat/models"
 	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
 	"sync"
-
-	"github.com/stretchr/objx"
 )
 
 func HandlePage(page string) http.Handler {
@@ -49,8 +48,14 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err, ok := r.Context().Value("error").(error); ok {
 		data["Error"] = err
 	}
-	if authCookie, err := r.Cookie("auth"); err == nil {
-		data["UserData"] = objx.MustFromBase64(authCookie.Value)
+	user, ok := r.Context().Value("user").(*models.UserModel)
+	if ok {
+		data["user"] = user
+	}
+	session, _ := store.Get(r, "session.id")
+	value, exists := session.Values["id"].(int)
+	if exists {
+		data["id"] = value
 	}
 	t.templ[t.filename].ExecuteTemplate(w, "base", data)
 }

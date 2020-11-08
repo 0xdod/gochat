@@ -2,33 +2,33 @@ package main
 
 import (
 	"net/http"
-	"time"
 
 	h "github.com/fibreactive/chat/handlers"
+	"github.com/urfave/negroni"
 
 	"github.com/gorilla/mux"
 )
 
-func MapRoutes(r *mux.Router) {
-
+func MapRoutes(n *negroni.Negroni) {
+	r := mux.NewRouter()
+	authRouter := r.PathPrefix("").Subrouter()
+	authRouter.Use(userHandler.MustAuth)
 	r.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
-	r.Handle("/chat", h.MustAuth(h.HandlePage("chat.html"))).Methods("GET")
-	r.Handle("/upload", h.MustAuth(h.HandlePage("upload.html"))).Methods("GET")
+	authRouter.Handle("/chat", h.HandlePage("chat.html")).Methods("GET")
+	authRouter.Handle("/upload", h.HandlePage("upload.html")).Methods("GET")
 	r.Handle("/signup", h.HandlePage("signup.html")).Methods("GET")
 	r.Handle("/login", h.HandlePage("login.html")).Methods("GET")
 	r.Handle("/login", userHandler).Methods("POST")
 	r.Handle("/signup", userHandler).Methods("POST")
-	r.Handle("/room", h.MustAuth(roomHandler))
-	r.Handle("/leave", h.MustAuth(roomHandler)).Methods("POST")
-	r.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
-		http.SetCookie(w, &http.Cookie{
-			Name:    "auth",
-			Expires: time.Now(),
-			Value:   "",
-			Path:    "/",
-			MaxAge:  -1,
-		})
-		w.Header().Set("Location", "/chat")
-		w.WriteHeader(http.StatusSeeOther)
+	authRouter.Handle("/room", roomHandler)
+	authRouter.Handle("/leave", roomHandler).Methods("POST")
+	authRouter.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		session, _ := h.Store.Get(r, "session.id")
+		session.Values["id"] = ""
+		if err := session.Save(r, w); err != nil {
+			return
+		}
+		http.Redirect(w, r, "/chat", http.StatusSeeOther)
 	})
+	n.UseHandler(r)
 }

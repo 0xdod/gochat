@@ -8,8 +8,7 @@ import (
 	"github.com/fibreactive/chat/chat"
 	"github.com/fibreactive/chat/handlers"
 	"github.com/fibreactive/chat/models"
-
-	"github.com/gorilla/mux"
+	"github.com/urfave/negroni"
 )
 
 const (
@@ -37,9 +36,9 @@ func init() {
 }
 
 func main() {
-	r := mux.NewRouter()
-	MapRoutes(r)
+	n := negroni.Classic()
+	MapRoutes(n)
 	go room.Run()
 	log.Println("Starting server on port 9000")
-	http.ListenAndServe(":9000", r)
+	http.ListenAndServe(":9000", n)
 }

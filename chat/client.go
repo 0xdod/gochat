@@ -4,6 +4,8 @@ package chat
 import (
 	"time"
 
+	"github.com/fibreactive/chat/models"
+
 	"github.com/gorilla/websocket"
 	uuid "github.com/satori/go.uuid"
 )
@@ -23,15 +25,15 @@ type Client struct {
 	//room is the room this client is chatting in
 	room *Room
 	// userData holds information about the user
-	userData map[string]interface{}
+	user *models.UserModel
 }
 
-func NewClient(s *websocket.Conn, data map[string]interface{}) *Client {
+func NewClient(s *websocket.Conn, user *models.UserModel) *Client {
 	return &Client{
-		id:       uuid.Must(uuid.NewV4()).String(),
-		socket:   s,
-		send:     make(chan *message, MessageBufferSize),
-		userData: data,
+		id:     uuid.Must(uuid.NewV4()).String(),
+		socket: s,
+		send:   make(chan *message, MessageBufferSize),
+		user:   user,
 	}
 }
 
@@ -45,10 +47,10 @@ func (c *Client) Read() {
 			return
 		}
 		msg.When = time.Now()
-		msg.From = c.userData["name"].(string)
-		if avatarUrl, ok := c.userData["avatar_url"]; ok {
+		msg.From = c.user.Nickname
+		if c.user.AvatarURL != "" {
 			// check might not be needed
-			msg.AvatarURL = avatarUrl.(string)
+			msg.AvatarURL = c.user.AvatarURL
 		}
 		c.room.forward <- msg
 	}

@@ -3,7 +3,6 @@ package chat
 //type room models a single chat room
 type Room struct {
 	//used to id a room
-	id   string
 	name string
 	//forward is a channel that holds incoming messages that should be forwarded to other clients
 	forward chan *message
@@ -67,9 +66,9 @@ func (r *Room) RemoveClient(client *Client) {
 	}
 }
 
-func (r *Room) FindClient(userID string) *Client {
+func (r *Room) FindClient(id uint) *Client {
 	for client := range r.clients {
-		if client.userData["userid"].(string) == userID {
+		if client.user.ID == id {
 			return client
 		}
 	}

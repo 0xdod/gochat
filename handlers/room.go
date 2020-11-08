@@ -5,10 +5,11 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/fibreactive/chat/models"
+
 	"github.com/fibreactive/chat/chat"
 
 	"github.com/gorilla/websocket"
-	"github.com/stretchr/objx"
 )
 
 //To get a web socket connection
@@ -21,14 +22,14 @@ type RoomHandler struct {
 
 func (rh *RoomHandler) handleLeaveRoom(w http.ResponseWriter, req *http.Request) {
 	//find client
-	authCookie, err := req.Cookie("auth")
-	if err != nil {
-		log.Fatal("Failed to get auth cookie:", err)
+	user, ok := req.Context().Value("user").(*models.UserModel)
+	if !ok {
+		http.Error(w, errors.New("Cannot find client!").Error(), http.StatusForbidden)
+		return
 	}
-	data := objx.MustFromBase64(authCookie.Value)
-	client := rh.Room.FindClient(data["userid"].(string))
+	client := rh.Room.FindClient(user.ID)
 	if client == nil {
-		http.Error(w, errors.New("Cannot find client!").Error(), http.StatusUnauthorized)
+		http.Error(w, errors.New("Cannot find client!").Error(), http.StatusForbidden)
 		return
 	}
 	rh.Room.RemoveClient(client)
@@ -39,16 +40,15 @@ func (rh *RoomHandler) handleLeaveRoom(w http.ResponseWriter, req *http.Request)
 func (rh *RoomHandler) handleChat(w http.ResponseWriter, req *http.Request) {
 	socket, err := upgrader.Upgrade(w, req, nil)
 	if err != nil {
-		http.NotFound(w, req)
 		log.Fatal("ServeHTTP:", err)
 		return
 	}
-	authCookie, err := req.Cookie("auth")
-	if err != nil {
-		log.Fatal("Failed to get auth cookie:", err)
+	user, ok := req.Context().Value("user").(*models.UserModel)
+	if !ok {
+		http.Error(w, errors.New("Cannot find client!").Error(), http.StatusForbidden)
+		return
 	}
-	data := objx.MustFromBase64(authCookie.Value)
-	client := chat.NewClient(socket, data)
+	client := chat.NewClient(socket, user)
 	defer rh.Room.RemoveClient(client)
 	rh.Room.AddClient(client)
 	go client.Write()

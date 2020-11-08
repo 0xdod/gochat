@@ -25,7 +25,7 @@ func NewMessage(to *Client, from, body string) *message {
 		When:    time.Now(),
 	}
 	if to != nil {
-		msg.To = to.userData["name"].(string)
+		msg.To = to.user.Nickname
 		msg.ClientID = to.id
 	}
 	return msg
@@ -33,7 +33,7 @@ func NewMessage(to *Client, from, body string) *message {
 
 func generateAdminMessage(c *Client, info string) *message {
 	var msg string
-	username := c.userData["name"].(string)
+	username := c.user.Nickname
 	roomName := c.room.name
 	switch info {
 	case NEW_USER:

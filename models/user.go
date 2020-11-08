@@ -12,6 +12,7 @@ type UserModel struct {
 	Nickname  string
 	Email     string `gorm:"not null;unique_index"`
 	Password  string
+	AvatarURL string
 }
 
 type filter map[string]interface{}
