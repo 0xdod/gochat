@@ -15,24 +15,23 @@ type Client struct {
 	//represents a socket connection for a single user
 	socket *websocket.Conn
 	//send is a buffered channel through which messages are sent
-	send chan *message
+	send chan *Message
 	//room is the room this client is chatting in
 	room *Room
 	// data finder knows how to find client information
 	DataFinder
+	IsPresent bool
 }
 
-// we need avatarurl, name, id
-
-func NewClient(s *websocket.Conn, df DataFinder) *Client {
+func NewClient(s *websocket.Conn, df DataFinder, ip bool) *Client {
 	return &Client{
 		socket:     s,
-		send:       make(chan *message, MessageBufferSize),
+		send:       make(chan *Message, MessageBufferSize),
 		DataFinder: df,
+		IsPresent:  ip,
 	}
 }
 
-// export this one
 func (c *Client) Read() {
 	defer c.socket.Close()
 	for {
@@ -45,7 +44,6 @@ func (c *Client) Read() {
 	}
 }
 
-// export this one too
 func (c *Client) Write() {
 	defer c.socket.Close()
 	for msg := range c.send {

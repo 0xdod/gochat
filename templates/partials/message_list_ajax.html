@@ -1,0 +1,66 @@
+{{ define "message_list_ajax" }}
+<script>
+//var messages = {{ .messages }}
+var messages = sessionStorage.getItem("{{.room.ID}}")
+if (!messages) {
+        messages = []
+      }else {
+        messages = JSON.parse(messages)
+      }
+var messagesBox = $('#messages')
+function Do(msg) {
+var message = $("<li class='message'>")
+var time = new Date(msg.when);
+var formattedTime = moment(msg.when).format('h:mm a');
+var rawText = msg.message;
+var $msgText = $('<span>');
+if (rawText.startsWith('/')) {
+  msg.message = rawText.substring(1);
+  $msgText = $('<strong>');
+} else if (rawText.startsWith('_') && rawText.endsWith('_')) {
+  msg.message = rawText.substring(1, rawText.length - 1);
+  $msgText = $('<em>');
+} else if (rawText.startsWith('*') && rawText.endsWith('*')) {
+  msg.message = rawText.substring(1, rawText.length - 1);
+  $msgText = $('<strong>');
+} else if (rawText.startsWith('~') && rawText.endsWith('~')) {
+  msg.message = rawText.substring(1, rawText.length - 1);
+  $msgText = $('<del>');
+}
+var userID = {{ .user.ID }}
+if (parseInt(userID) === parseInt(msg.userID)) {
+  message.addClass("my-message")
+}
+if (msg.from === "Admin"){
+  message.addClass("admin-message")
+}
+messagesBox.append(
+  message.append(
+    $('<img>')
+      .attr('title', msg.from)
+      .css({
+        borderRadius: '50%',
+        width: 50,
+        verticalAlign: 'middle',
+      })
+      .attr('src', msg.avatarURL),
+    $('<div>')
+      .addClass('message__title')
+      .append(
+        $('<strong>').text(msg.from),
+        $('<span>').text(formattedTime)
+      ),
+    $('<div>')
+      .addClass('message__body')
+      .append($msgText.text(msg.message))
+  )
+);
+scrollToBottom()
+}
+messages.forEach(function(item){
+	if (item !== null){
+		Do(item)
+	}
+})
+</script>
+{{ end }}

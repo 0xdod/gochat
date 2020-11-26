@@ -8,6 +8,12 @@ import (
 
 var decoder = schema.NewDecoder()
 
+type CreateMessageJSON struct {
+	Message string `json:"message,omitempty"`
+	RoomID  int    `json:"roomID,omitempty"`
+	UserID  int    `json:"userID,omitempty"`
+}
+
 type LoginForm struct {
 	Email    string `schema:"email"`
 	Password string `schema:"password"`

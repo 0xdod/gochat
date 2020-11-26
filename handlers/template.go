@@ -28,6 +28,11 @@ func (ts *templateStore) renderTemplate(out io.Writer, filename string, data int
 	ts.templates[filename].ExecuteTemplate(out, "base", data)
 }
 
+func (ts *templateStore) renderOne(out io.Writer, filename string, data interface{}) {
+	ts.once.Do(ts.parseTemplates)
+	ts.templates["chat.html"].ExecuteTemplate(out, filename, data)
+}
+
 func (ts *templateStore) parseTemplates() {
 	// load and compile template only once
 	ts.templates = make(map[string]*template.Template)
@@ -56,12 +61,16 @@ func render(out io.Writer, templateName string, data interface{}) {
 	ts.renderTemplate(out, templateName, data)
 }
 
+func renderOne(out io.Writer, filename string, data interface{}) {
+	ts.renderOne(out, filename, data)
+}
+
 func (t *TemplateHandler) HandlePage(templateName string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			m := objx.MSI()
 			m.Set("Host", r.Host)
-			user, ok := Get(r, "user").(*models.UserModel)
+			user, ok := Get(r, "user").(*models.User)
 			if ok {
 				m.Set("user", user)
 			}
@@ -70,6 +79,9 @@ func (t *TemplateHandler) HandlePage(templateName string) http.Handler {
 				room := t.RoomService.FindByLink(link)
 				t.RoomService.AddParticipant(room, user)
 				m.Set("room", room)
+				session, _ := store.Get(r, "session.id")
+				session.Values["roomID"] = room.ID
+				session.Save(r, w)
 			}
 			m.Set("MyRooms", t.UserService.GetRooms(user))
 			render(w, templateName, m)

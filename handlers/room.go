@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/fibreactive/chat/models"
 	"github.com/stretchr/objx"
 
 	"github.com/fibreactive/chat/chat"
+	"github.com/fibreactive/chat/models"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -39,7 +39,7 @@ func (rh *RoomHandler) PopulateRooms() {
 }
 
 func (rh *RoomHandler) ListOrCreate(w http.ResponseWriter, req *http.Request) {
-	user, ok := Get(req, "user").(*models.UserModel)
+	user, ok := Get(req, "user").(*models.User)
 	if !ok {
 		http.Error(w, errors.New("Cannot find client!").Error(), http.StatusForbidden)
 		return
@@ -50,7 +50,7 @@ func (rh *RoomHandler) ListOrCreate(w http.ResponseWriter, req *http.Request) {
 		if err := parseForm(req, &form); err != nil {
 			panic(err)
 		}
-		roomDB := &models.RoomModel{
+		roomDB := &models.Room{
 			Name:        form.Name,
 			Description: form.Description,
 		}
@@ -76,7 +76,7 @@ func (rh *RoomHandler) Leave(w http.ResponseWriter, req *http.Request) {
 	IdStr := vars["id"]
 	id, _ := strconv.Atoi(IdStr)
 	//find client
-	user, ok := Get(req, "user").(*models.UserModel)
+	user, ok := Get(req, "user").(*models.User)
 	if !ok {
 		http.Error(w, errors.New("Cannot find user!").Error(), http.StatusForbidden)
 		return
@@ -95,7 +95,7 @@ func (rh *RoomHandler) Leave(w http.ResponseWriter, req *http.Request) {
 }
 
 func (rh *RoomHandler) Chat(w http.ResponseWriter, req *http.Request) {
-	user, ok := Get(req, "user").(*models.UserModel)
+	user, ok := Get(req, "user").(*models.User)
 	if !ok {
 		http.Error(w, errors.New("Cannot find client!").Error(), http.StatusForbidden)
 		return
@@ -115,7 +115,12 @@ func (rh *RoomHandler) Chat(w http.ResponseWriter, req *http.Request) {
 	if room.Nclients < 1 {
 		go room.Run()
 	}
-	client := chat.NewClient(socket, user)
+	roomDB, ok := Get(req, "room").(*models.Room)
+	if !ok {
+		return
+	}
+	Ispresent := rh.RoomService.IsPresent(roomDB, user)
+	client := chat.NewClient(socket, user, Ispresent)
 	defer room.RemoveClient(client)
 	room.AddClient(client)
 	go client.Write()

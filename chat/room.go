@@ -3,7 +3,7 @@ package chat
 //type room models a single chat room
 type Room struct {
 	//forward is a channel that holds incoming messages that should be forwarded to other clients
-	forward chan *message
+	forward chan *Message
 	//broadcast is a channel that holds incoming messages that should be forwarded to other clients except the sender
 	// join is a channel for clients wishing to join the room.
 	join chan *Client
@@ -21,7 +21,7 @@ type Room struct {
 
 func NewRoom(df DataFinder) *Room {
 	return &Room{
-		forward:    make(chan *message),
+		forward:    make(chan *Message),
 		join:       make(chan *Client),
 		leave:      make(chan *Client),
 		clients:    make(map[*Client]bool),
@@ -37,10 +37,12 @@ func (r *Room) Run() {
 			// joining
 			r.clients[client] = true
 			r.Nclients++
-			msg := generateAdminMessage(client, NEW_USER)
-			r.sendMessageToClient(client, msg)
-			msg = generateAdminMessage(client, USER_JOINED)
-			r.sendMessageToClientsExcept(client, msg)
+			if !client.IsPresent {
+				msg := generateAdminMessage(client, NEW_USER)
+				r.sendMessageToClient(client, msg)
+				msg = generateAdminMessage(client, USER_JOINED)
+				r.sendMessageToClientsExcept(client, msg)
+			}
 		case client := <-r.leave:
 			// leaving
 			r.Nclients--
@@ -71,7 +73,7 @@ func (r *Room) CountClients() int {
 
 func (r *Room) AddClient(client *Client) {
 	// find client, if present remove
-	if c := r.FindClient(client.DataFinder.GetIntID()); c != nil {
+	if c := r.FindClient(client.GetIntID()); c != nil {
 		r.RemoveClient(c)
 	}
 	client.room = r
@@ -86,18 +88,18 @@ func (r *Room) RemoveClient(client *Client) {
 
 func (r *Room) FindClient(id int) *Client {
 	for client, _ := range r.clients {
-		if client.DataFinder.GetIntID() == id {
+		if client.GetIntID() == id {
 			return client
 		}
 	}
 	return nil
 }
 
-func (r *Room) sendMessageToClient(c *Client, msg *message) {
+func (r *Room) sendMessageToClient(c *Client, msg *Message) {
 	c.send <- msg
 }
 
-func (r *Room) sendMessageToClientsExcept(ignore *Client, msg *message) {
+func (r *Room) sendMessageToClientsExcept(ignore *Client, msg *Message) {
 	for client := range r.clients {
 		if client != ignore {
 			client.send <- msg

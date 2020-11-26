@@ -11,7 +11,7 @@ const (
 )
 
 //type message is a representation of messages sent between users
-type message struct {
+type Message struct {
 	From      string    `json:"from,omitempty"`
 	To        string    `json:"to,omitempty"`
 	Message   string    `json:"message,omitempty"`
@@ -20,8 +20,8 @@ type message struct {
 	UserID    int       `json:"userID,omitempty"`
 }
 
-func NewMessage(to, from *Client, content string) *message {
-	msg := &message{}
+func NewMessage(to, from *Client, content string) *Message {
+	msg := &Message{}
 	if from == nil {
 		msg.From = "Admin"
 	} else {
@@ -37,7 +37,24 @@ func NewMessage(to, from *Client, content string) *message {
 	return msg
 }
 
-func generateAdminMessage(c *Client, info string) *message {
+func NewMessageAlt(to, from DataFinder, content string) *Message {
+	msg := &Message{}
+	if from == nil {
+		msg.From = "Admin"
+	} else {
+		msg.From = from.GetName()
+		msg.UserID = from.GetIntID()
+		msg.AvatarURL = from.GetAvatarURL()
+	}
+	if to != nil {
+		msg.To = to.GetName()
+	}
+	msg.Message = content
+	msg.When = time.Now()
+	return msg
+}
+
+func generateAdminMessage(c *Client, info string) *Message {
 	var msg string
 	roomName := c.room.GetName()
 	username := c.GetName()

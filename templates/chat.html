@@ -8,37 +8,60 @@
     <a href="/">create a new chat room or join an existing one</a>.
   </p>
 </div> {{ else }}
-<div class="sidebar">
-  <div class="user-info header">
-    <h1>My Rooms</h1>
-  </div>
-  <div class="main">
-    {{ if .MyRooms }} {{ template "partials/rooms_list_sidebar" . }} {{end}}
-  </div>
-</div>
+<div class="chat">
+  <div class="sidebar">
+    <div class="sidebar__header head">
+      <h2 class="sidebar__title">My Rooms</h2>
+    </div>
+    <div class="sidebar__body body">
+      {{ if .MyRooms }} {{ template "partials/rooms_list_sidebar" . }} {{end}}
+    </div>
+ </div>
 
-<div class="chatarea">
-  <div class="header">
-    <div class="room-image"></div>
-    <div class="room-info"></div>
+<div class="chat__main">
+  <div class="chat__header head">
+    <div></div>
+    <div></div>
     <a href="/logout">Sign out</a>
     <button id="leave-room">Leave room</button>
   </div>
 
-  <div class="main">
-    <div class="messages-container">
-      <ul id="messages"></ul>
+  <div class="chat__body body">
+    <ul id="messages" class="chat__messages"></ul>
+    <div class="chatarea__footer">
+      <form class="chat__form" id="chatbox" role="form">
+        <input type="text" id="message" />
+        <button type="submit" class="btn btn-light" disabled>Send</button>
+      </form>
     </div>
-
-    <form class="chatform" id="chatbox" role="form">
-      <input type="text" id="message" />
-      <button type="submit" class="btn btn-light" disabled>Send</button>
-    </form>
   </div>
 </div>
+</div>
+
 {{ end }} {{ end }} 
 
 {{ define "scripts" }}
+<script>
+  var scrollToBottom = function(){
+      var messages = $('#messages')
+      var newMessage = messages.children('li:last-child')
+
+      var clientHeight = messages.prop('clientHeight')
+      var scrollTop = messages.prop('scrollTop')
+      var scrollHeight = messages.prop('scrollHeight')
+      var newMessageHeight = newMessage.innerHeight()
+      var lastMessageHeight = newMessage.prev().innerHeight()
+
+      if (
+        clientHeight + scrollTop + newMessageHeight + lastMessageHeight
+        >=
+        scrollHeight)
+      {
+        messages.scrollTop(scrollHeight)
+      }
+    }
+</script>
+
 <script>
   $(function () {
     var socket = null;
@@ -58,8 +81,18 @@
         alert('Error: There is no socket connection.');
         return false;
       }
-      socket.send(JSON.stringify({ message: msgBox.val() }));
+      var message = msgBox.val()
+      socket.send(JSON.stringify({ message: message }));
       msgBox.val('');
+       // make ajax to save message to db 
+       $.post({
+        url: '/messages',
+        contentType: 'application/json',
+        data: JSON.stringify({ message:message, userID:{{ .user.ID }}, roomID: {{ .room.ID }} })
+       }).
+       done(function(){
+        console.log("Success")
+       })
       return false;
     });
     if (!window['WebSocket']) {
@@ -96,6 +129,18 @@
         if (msg.from === "Admin"){
           message.addClass("admin-message")
         }
+
+      var messageStore = sessionStorage.getItem("{{.room.ID}}")
+      if (!messageStore) {
+        messageStore = []
+      }else {
+        messageStore = JSON.parse(messageStore)
+      }
+      if (msg.from !== 'Admin'){
+        messageStore.push(msg)
+        sessionStorage.setItem("{{.room.ID}}", JSON.stringify(messageStore))
+      }
+      
         messages.append(
           message.append(
             $('<img>')
@@ -117,10 +162,13 @@
               .append($msgText.text(msg.message))
           )
         );
+        scrollToBottom()
       };
     }
   });
 </script>
+
+{{ template "message_list_ajax" .}}
 
 <script>
   $(function () {

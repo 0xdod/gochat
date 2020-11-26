@@ -5,7 +5,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
-type UserModel struct {
+type User struct {
 	gorm.Model
 	Firstname string
 	Lastname  string
@@ -13,35 +13,36 @@ type UserModel struct {
 	Email     string `gorm:"not null;unique_index"`
 	Password  string
 	AvatarURL string
-	Rooms     []*RoomModel `gorm:"many2many:room_participants"`
+	Rooms     []*Room    `gorm:"many2many:room_participants"`
+	Messages  []*Message `gorm:"constraint:OnDelete:CASCADE;"`
 }
 
-func (um *UserModel) GetIntID() int {
+func (um *User) GetIntID() int {
 	return int(um.ID)
 }
 
-func (um *UserModel) GetStringID() string {
+func (um *User) GetStringID() string {
 	return ""
 }
 
-func (um *UserModel) GetName() string {
+func (um *User) GetName() string {
 	return um.Nickname
 }
 
-func (um *UserModel) GetAvatarURL() string {
+func (um *User) GetAvatarURL() string {
 	return um.AvatarURL
 }
 
 // UserService is responsible for enabling communication between the model
 // and the handlers
 type UserService interface {
-	Authenticate(email, password string) *UserModel
-	FindByID(id uint) *UserModel
-	FindByEmail(email string) *UserModel
-	Create(user *UserModel) error
-	Update(user *UserModel) error
+	Authenticate(email, password string) *User
+	FindByID(id uint) *User
+	FindByEmail(email string) *User
+	Create(user *User) error
+	Update(user *User) error
 	Delete(id uint) error
-	GetRooms(*UserModel) []*RoomModel
+	GetRooms(*User) []*Room
 }
 
 // UserGorm reads and writes directly to the database
@@ -53,34 +54,34 @@ func NewUserGorm(db *gorm.DB) *UserGorm {
 	return &UserGorm{db}
 }
 
-func (ug *UserGorm) FindByID(id uint) *UserModel {
+func (ug *UserGorm) FindByID(id uint) *User {
 	return ug.byQuery(ug.DB.Where("id = ?", id))
 }
 
-func (ug *UserGorm) FindByEmail(email string) *UserModel {
+func (ug *UserGorm) FindByEmail(email string) *User {
 	return ug.byQuery(ug.DB.Where("email = ?", email))
 }
 
-func (ug *UserGorm) Create(user *UserModel) error {
+func (ug *UserGorm) Create(user *User) error {
 	return ug.DB.Create(user).Error
 }
 
-func (ug *UserGorm) Update(user *UserModel) error {
+func (ug *UserGorm) Update(user *User) error {
 	return ug.DB.Save(user).Error
 }
 
 func (ug *UserGorm) Delete(id uint) error {
-	user := ug.FindByID(id)
-	return ug.DB.Delete(user).Error
+	user := &User{}
+	return ug.DB.Delete(user, id).Error
 }
-func (ug *UserGorm) GetRooms(u *UserModel) []*RoomModel {
-	var rooms []*RoomModel
+func (ug *UserGorm) GetRooms(u *User) []*Room {
+	var rooms []*Room
 	ug.DB.Model(u).Association("Rooms").Find(&rooms)
 	return rooms
 }
 
-func (ug *UserGorm) byQuery(query *gorm.DB) *UserModel {
-	user := &UserModel{}
+func (ug *UserGorm) byQuery(query *gorm.DB) *User {
+	user := &User{}
 	err := query.First(user).Error
 	switch err {
 	case nil:
@@ -93,15 +94,15 @@ func (ug *UserGorm) byQuery(query *gorm.DB) *UserModel {
 }
 
 func (ug *UserGorm) DestructiveReset() {
-	ug.DropTableIfExists(&UserModel{})
+	ug.DropTableIfExists(&User{})
 	ug.AutoMigrate()
 }
 
 func (ug *UserGorm) AutoMigrate() {
-	ug.DB.AutoMigrate(&UserModel{})
+	ug.DB.AutoMigrate(&User{})
 }
 
-func (ug *UserGorm) Authenticate(email, password string) *UserModel {
+func (ug *UserGorm) Authenticate(email, password string) *User {
 	user := ug.FindByEmail(email)
 	if user == nil || user.Password != password {
 		return nil

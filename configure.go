@@ -26,6 +26,7 @@ const (
 var rh *handlers.RoomHandler
 var uh *handlers.UserHandler
 var th *handlers.TemplateHandler
+var mh *handlers.MessageHandler
 
 func init() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -36,11 +37,13 @@ func init() {
 	}
 	ug := models.NewUserGorm(db)
 	rg := models.NewRoomGorm(db)
-	uh = &handlers.UserHandler{ug}
+	mg := models.NewMessageGorm(db)
+	uh = &handlers.UserHandler{ug, rg}
 	rh = &handlers.RoomHandler{rg, ug, nil}
-	rh.PopulateRooms()
 	th = &handlers.TemplateHandler{ug, rg}
-	db.AutoMigrate(&models.UserModel{}, &models.RoomModel{})
+	mh = &handlers.MessageHandler{mg, rg, ug}
+	db.AutoMigrate(&models.User{}, &models.Room{}, &models.Message{})
+	rh.PopulateRooms()
 }
 
 func GetDB(connInfo string) (*gorm.DB, error) {
@@ -70,5 +73,7 @@ func MapRoutes(n *negroni.Negroni) {
 	authRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/r", http.StatusSeeOther)
 	})
+	authRouter.HandleFunc("/messages", mh.Save).Methods("POST")
+	authRouter.HandleFunc("/messages", mh.List).Methods("GET")
 	n.UseHandler(r)
 }

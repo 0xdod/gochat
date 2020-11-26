@@ -13,6 +13,11 @@ func (uh *UserHandler) MustAuth(next http.Handler) http.Handler {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
+		if rID, ok := session.Values["roomID"].(uint); ok {
+			room := uh.RoomService.FindByID(rID)
+			ctx := context.WithValue(r.Context(), "room", room)
+			r = r.WithContext(ctx)
+		}
 		user := uh.UserService.FindByID(id)
 		ctx := context.WithValue(r.Context(), "user", user)
 		r = r.WithContext(ctx)

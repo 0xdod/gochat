@@ -13,6 +13,7 @@ var store = sessions.NewCookieStore([]byte("hello world"))
 
 type UserHandler struct {
 	models.UserService
+	models.RoomService
 }
 
 func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +22,7 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		if err := parseForm(r, &form); err != nil {
 			panic(err)
 		}
-		user := &models.UserModel{
+		user := &models.User{
 			Firstname: form.Firstname,
 			Lastname:  form.Lastname,
 			Nickname:  form.Nickname,

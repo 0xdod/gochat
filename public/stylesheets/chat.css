@@ -11,15 +11,39 @@ body {
   font-size: 1rem;
   font-style: italic;
 }
+.head {
+	display: flex;
+	height: 7%;
+	padding: 0.5rem;
+	align-items: center;
+}
+
+.body {
+	display: flex;
+	height: 93%;
+	flex-direction: column;
+	padding: 1rem;
+	border: 1px solid #eee;
+}
+
+.chat {
+	display: flex;
+	width: 100vw;
+}
+
 .sidebar {
 	width: 20%;
 	display: flex;
 	flex-direction: column;
 }
-.header {
-	display: flex;
-	height: 7%;
-	padding: 1rem;
+
+.sidebar__header{
+	text-align: center;
+}
+
+.sidebar__title {
+	width: 100%;
+	margin: 0;
 }
 
 .sidebar li {
@@ -37,66 +61,57 @@ body {
 .sidebar li .selected {
     background: blue;
 }
-.main {
-	display: flex;
-	height: 93%;
-	flex-direction: column;
-	padding: 1rem;
-	border: 1px solid #eee;
-}
-.chatarea {
+
+.chat__main {
 	width: 80%;
 	display: flex;
 	flex-direction: column;
 }
 
-.chatarea .header button {
+.chat__header button {
    margin-left: auto;
 }
 
-.chatarea .main{
-	
-}
 
-.messages-container {
+.chat__messages {
    padding: 1.2rem;
    overflow-y: scroll;
    height: 90%;
 }
 
-.chatform {
+.chat__form {
 	background: #000;
 	padding: 1.2rem;
 	width: 100%;
 	display: flex;
 
 }
-.chatform input {
+.chat__form input {
 	display: block;
 	margin-right: 0.5rem;
 	border: 0;
 	width: 90%;
 	padding: 1.2rem;
 }
-.chatform button {
+.chat__form button {
 	width: 10%;
 	background: rgb(130, 224, 255);
 	border: none;
 }
 #messages {
-	list-style-type: none;
 	margin: 0;
 	padding: 0;
 }
-#messages li {
+.chat__messages li {
 	padding: 0.5rem 1rem;
 	margin-bottom: 0.2rem;
+	list-style-type: none;
 }
-#messages li:nth-child(odd) {
+.chat__messages li:nth-child(odd) {
 	background: #eee;
 }
 
-#messages li img {
+.chat__messages li img {
 	margin-right: 1rem;
 }
 
@@ -119,18 +134,18 @@ body {
 	.sidebar {
 		display: none;
 	}
-	.chatarea {
+	.chat__main {
 		width: 100%;
 	}
-	.chatform {
+	.chat__form {
 		flex-direction: column;
 	}
-	.chatform button {
+	.chat__form button {
 		width: 100%;
 		margin-top: 0.5rem;
 	}
 
-	.chatform input {
+	.chat__form input {
 		width: 100%;
 		margin: 0;
 	}

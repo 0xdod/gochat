@@ -10,33 +10,34 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
-type RoomModel struct {
+type Room struct {
 	gorm.Model
 	Name        string `gorm:"not null;"`
 	Description string
-	Link        string       `gorm:"not null;unique_index"`
-	Users       []*UserModel `gorm:"many2many:room_participants"`
-	Admins      []*UserModel `gorm:"many2many:room_admins"`
+	Link        string     `gorm:"not null;unique_index"`
+	Users       []*User    `gorm:"many2many:room_participants"`
+	Admins      []*User    `gorm:"many2many:room_admins"`
+	Messages    []*Message `gorm:"constraint:OnDelete:CASCADE;"`
 	AvatarURL   string
 }
 
-func (rm *RoomModel) GetIntID() int {
+func (rm *Room) GetIntID() int {
 	return int(rm.ID)
 }
 
-func (rm *RoomModel) GetStringID() string {
+func (rm *Room) GetStringID() string {
 	return ""
 }
 
-func (rm *RoomModel) GetName() string {
+func (rm *Room) GetName() string {
 	return rm.Name
 }
 
-func (rm *RoomModel) GetAvatarURL() string {
+func (rm *Room) GetAvatarURL() string {
 	return rm.AvatarURL
 }
 
-func (rm *RoomModel) CreateLink() {
+func (rm *Room) CreateLink() {
 	id := strconv.Itoa(int(rm.ID))
 	buf := &bytes.Buffer{}
 	wc := base64.NewEncoder(base64.URLEncoding, buf)
@@ -45,7 +46,7 @@ func (rm *RoomModel) CreateLink() {
 	rm.Link = buf.String()
 }
 
-func (rm *RoomModel) AfterCreate(tx *gorm.DB) (err error) {
+func (rm *Room) AfterCreate(tx *gorm.DB) (err error) {
 	rm.CreateLink()
 	return tx.Model(rm).Update("link", rm.Link).Error
 }
@@ -64,17 +65,19 @@ func RoomIDFromLink(s string) int {
 type Map map[string]interface{}
 
 type RoomService interface {
-	GetAll() []*RoomModel
-	FindMany(Map) []*RoomModel
-	FindByID(id uint) *RoomModel
-	FindByLink(string) *RoomModel
-	Create(room *RoomModel) error
-	Update(room *RoomModel) error
+	GetAll() []*Room
+	FindMany(Map) []*Room
+	FindByID(id uint) *Room
+	FindByLink(string) *Room
+	Create(room *Room) error
+	Update(room *Room) error
 	Delete(id uint) error
-	GetAdmins(*RoomModel) []*UserModel
-	GetParticipants(*RoomModel) []*UserModel
-	AddParticipant(*RoomModel, *UserModel) error
-	RemoveParticipant(*RoomModel, *UserModel) error
+	GetAdmins(*Room) []*User
+	GetParticipants(*Room) []*User
+	IsPresent(*Room, *User) bool
+	AddParticipant(*Room, *User) error
+	RemoveParticipant(*Room, *User) error
+	GetMessages(r *Room) []*Message
 }
 
 type RoomGorm struct {
@@ -85,71 +88,87 @@ func NewRoomGorm(db *gorm.DB) *RoomGorm {
 	return &RoomGorm{db}
 }
 
-func (rg *RoomGorm) GetAll() []*RoomModel {
-	var rm []*RoomModel
-	rg.DB.Find(&rm)
+func (rg *RoomGorm) GetAll() []*Room {
+	var rm []*Room
+	rg.DB.Find(&rm).Order("created_at desc")
 	return rm
 }
 
-func (rg *RoomGorm) FindByLink(s string) *RoomModel {
+func (rg *RoomGorm) FindByLink(s string) *Room {
 	id := RoomIDFromLink(s)
 	return rg.FindByID(uint(id))
 }
 
-func (rg *RoomGorm) FindByID(id uint) *RoomModel {
+func (rg *RoomGorm) FindByID(id uint) *Room {
 	return rg.byQuery(rg.DB.Where("id = ?", id))
 }
 
-func (rg *RoomGorm) FindMany(m Map) []*RoomModel {
-	var rm []*RoomModel
+func (rg *RoomGorm) FindMany(m Map) []*Room {
+	var rm []*Room
 	rg.DB.Where(m).Find(&rm)
 	return rm
 }
 
-func (rg *RoomGorm) Create(room *RoomModel) error {
+func (rg *RoomGorm) Create(room *Room) error {
 	return rg.DB.Create(room).Error
 }
 
-func (rg *RoomGorm) Update(room *RoomModel) error {
+func (rg *RoomGorm) Update(room *Room) error {
 	return rg.DB.Save(room).Error
 }
 
 func (rg *RoomGorm) Delete(id uint) error {
-	room := rg.FindByID(id)
-	return rg.DB.Delete(room).Error
+	room := Room{}
+	return rg.DB.Delete(&room, id).Error
 }
 
-func (rg *RoomGorm) GetParticipants(r *RoomModel) []*UserModel {
-	var users []*UserModel
+func (rg *RoomGorm) GetParticipants(r *Room) []*User {
+	var users []*User
 	rg.DB.Model(r).Association("Users").Find(&users)
 	return users
 }
 
-func (rg *RoomGorm) AddParticipant(room *RoomModel, u *UserModel) error {
+func (rg *RoomGorm) IsPresent(r *Room, u *User) bool {
+	users := rg.GetParticipants(r)
+	for _, user := range users {
+		if u.ID == user.ID {
+			return true
+		}
+	}
+	return false
+}
+
+func (rg *RoomGorm) AddParticipant(room *Room, u *User) error {
 	return rg.DB.Model(room).Association("Users").Append(u).Error
 }
 
-func (rg *RoomGorm) RemoveParticipant(room *RoomModel, u *UserModel) error {
+func (rg *RoomGorm) RemoveParticipant(room *Room, u *User) error {
 	return rg.DB.Model(room).Association("Users").Delete(u).Error
 }
 
-func (rg *RoomGorm) GetAdmins(r *RoomModel) []*UserModel {
-	var users []*UserModel
+func (rg *RoomGorm) GetAdmins(r *Room) []*User {
+	var users []*User
 	rg.DB.Model(r).Association("Admins").Find(&users)
 	return users
 }
 
+func (rg *RoomGorm) GetMessages(r *Room) []*Message {
+	var messages []*Message
+	rg.DB.Model(r).Order("created_at").Association("Messages").Find(&messages)
+	return messages
+}
+
 func (rg *RoomGorm) DestructiveReset() {
-	rg.DropTableIfExists(&RoomModel{})
+	rg.DropTableIfExists(&Room{})
 	rg.AutoMigrate()
 }
 
 func (rg *RoomGorm) AutoMigrate() {
-	rg.DB.AutoMigrate(&RoomModel{})
+	rg.DB.AutoMigrate(&Room{})
 }
 
-func (rg *RoomGorm) byQuery(query *gorm.DB) *RoomModel {
-	room := &RoomModel{}
+func (rg *RoomGorm) byQuery(query *gorm.DB) *Room {
+	room := &Room{}
 	err := query.First(room).Error
 	switch err {
 	case nil:
