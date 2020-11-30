@@ -68,7 +68,7 @@ func (mg *MessageGorm) GetByUser(u *User) []*Message {
 
 func (mg *MessageGorm) GetByRoom(r *Room) []*Message {
 	var msgs []*Message
-	mg.Model(r).Order("created_at desc").Association("Messages").Find(msgs)
+	mg.Model(r).Order("created_at desc").Association("Messages").Find(&msgs)
 	return msgs
 }
 

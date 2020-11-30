@@ -33,25 +33,23 @@ func (mh *MessageHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// map every message to chat.message
-// on load, make ajax request to get chats
-// return chats and append html
 func (mh *MessageHandler) List(w http.ResponseWriter, r *http.Request) {
 	room := Get(r, "room").(*models.Room)
 	session, _ := store.Get(r, "session.id")
 	isPresent := session.Values["present"].(bool)
-	messages := mh.RoomService.GetMessages(room)
+	messages := mh.MessageService.GetByRoom(room)
 	newMessages := make([]*chat.Message, len(messages))
+	w.Header().Add("Content-Type", "application/json")
 	if !isPresent {
 		w.WriteHeader(200)
 		return
 	}
 	for i, message := range messages {
-		message.User = mh.UserService.FindByID(uint(message.UserID))
+		user := mh.UserService.FindByID(message.UserID)
+		message.User = user
 		newMessage := chat.NewMessage(nil, message.User, message.Message)
 		newMessages[i] = newMessage
 	}
-	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(newMessages)
 	if err != nil {
 		w.WriteHeader(422)

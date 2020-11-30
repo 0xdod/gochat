@@ -33,7 +33,7 @@ func Get(r *http.Request, key string) interface{} {
 	return r.Context().Value(key)
 }
 
-func Set(r *http.Request, key string, value interface{}) {
+func Set(r *http.Request, key string, value interface{}) *http.Request {
 	ctx := context.WithValue(r.Context(), key, value)
-	r = r.WithContext(ctx)
+	return r.WithContext(ctx)
 }
