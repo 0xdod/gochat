@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"os"
 
 	"github.com/fibreactive/golang-rtc/models"
 	"github.com/gorilla/sessions"
