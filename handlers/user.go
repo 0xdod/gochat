@@ -9,12 +9,20 @@ import (
 	"github.com/stretchr/objx"
 )
 
-//os.GetEnv(session_key)
-var store = sessions.NewCookieStore([]byte("hello world"))
+var sessionKey = getEnv("SESSION_KEY", "!(#IRJfqkfjwKEENRLDNnA")
+var store = sessions.NewCookieStore([]byte(sessionKey))
 
 type UserHandler struct {
 	models.UserService
 	models.RoomService
+}
+
+func getEnv(key, def string) string {
+	s := os.GetEnv(key)
+	if s == "" {
+		return def
+	}
+	return s
 }
 
 func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
