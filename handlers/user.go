@@ -19,7 +19,7 @@ type UserHandler struct {
 }
 
 func getEnv(key, def string) string {
-	s := os.GetEnv(key)
+	s := os.Getenv(key)
 	if s == "" {
 		return def
 	}
