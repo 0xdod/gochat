@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -29,8 +30,15 @@ var th *handlers.TemplateHandler
 var mh *handlers.MessageHandler
 
 func init() {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+	localPsql := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
+
+	psqlInfo := os.Getenv("DATABASE_URL")
+
+	if psqlInfo == "" {
+		psqlInfo = localPsql
+	}
+
 	db, err := GetDB(psqlInfo)
 	if err != nil {
 		panic(err)
