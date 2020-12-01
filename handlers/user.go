@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/fibreactive/chat/models"
+	"github.com/fibreactive/golang-rtc/models"
 	"github.com/gorilla/sessions"
 	"github.com/stretchr/objx"
 )

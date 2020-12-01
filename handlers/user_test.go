@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/fibreactive/chat/models"
+	"github.com/fibreactive/golang-rtc/models"
 	"github.com/jinzhu/gorm"
 )
 

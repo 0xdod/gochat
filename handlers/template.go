@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/fibreactive/chat/models"
+	"github.com/fibreactive/golang-rtc/models"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/objx"
 )

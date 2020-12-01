@@ -8,8 +8,8 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
-	"github.com/fibreactive/chat/handlers"
-	"github.com/fibreactive/chat/models"
+	"github.com/fibreactive/golang-rtc/handlers"
+	"github.com/fibreactive/golang-rtc/models"
 
 	"github.com/urfave/negroni"
 

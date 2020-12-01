@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/objx"
 
-	"github.com/fibreactive/chat/chat"
-	"github.com/fibreactive/chat/models"
+	"github.com/fibreactive/golang-rtc/chat"
+	"github.com/fibreactive/golang-rtc/models"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
