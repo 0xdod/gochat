@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fibreactive/golang-rtc/models"
+	"github.com/0xdod/gochat/models"
 	"github.com/jinzhu/gorm"
 )
 

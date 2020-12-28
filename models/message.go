@@ -56,7 +56,7 @@ func (mg *MessageGorm) Delete(id uint) error {
 
 func (mg *MessageGorm) GetAll() []*Message {
 	var msgs []*Message
-	mg.DB.Find(&msgs)
+	mg.DB.Order("created_at desc").Find(&msgs)
 	return msgs
 }
 

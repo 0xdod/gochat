@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/fibreactive/golang-rtc/chat"
-	"github.com/fibreactive/golang-rtc/models"
+	"github.com/0xdod/gochat/chat"
+	"github.com/0xdod/gochat/models"
 )
 
 type MessageHandler struct {

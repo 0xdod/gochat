@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/fibreactive/golang-rtc/models"
+	"github.com/0xdod/gochat/models"
 	"github.com/gorilla/sessions"
 	"github.com/stretchr/objx"
 )
