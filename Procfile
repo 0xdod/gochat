@@ -1,1 +1,1 @@
-web: bin/golang-rtc
+web: bin/gochat

@@ -1,4 +1,4 @@
-module github.com/fibreactive/golang-rtc
+module github.com/0xdod/gochat
 
 go 1.14
 
