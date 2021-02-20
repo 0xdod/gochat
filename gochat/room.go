@@ -1,0 +1,57 @@
+package gochat
+
+import (
+	"context"
+	"time"
+)
+
+// Room represents a single chat room.
+type Room struct {
+	ID          uint      `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description,omitempty"`
+	Link        string    `json:"link"`
+	Icon        string    `json:"icon"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+}
+
+// RoomService represents a service for managing messages.
+type RoomService interface {
+	// Retrieves a Room by ID.
+	// Returns ENOTFOUND if Room does not exist.
+	FindRoomByID(ctx context.Context, id int) (*Room, error)
+
+	// Retrieves a list of Rooms by filter. Also returns total count of matching
+	// Rooms which may differ from returned results if filter.Limit is specified.
+	FindRooms(ctx context.Context, filter RoomFilter) ([]*Room, int, error)
+
+	// Creates a new Room.
+	CreateRoom(ctx context.Context, Room *Room) error
+
+	// Updates a Room object.
+	UpdateRoom(ctx context.Context, id int, upd RoomUpdate) (*Room, error)
+
+	// Permanently deletes a Room.
+	DeleteRoom(ctx context.Context, id int) error
+}
+
+// RoomFilter represents a filter passed to FindRooms().
+type RoomFilter struct {
+	// Filtering fields.
+	ID   *int   `json:"id"`
+	Name string `json:"name"`
+	Link string `json:"link"`
+
+	// Restrict to subset of results.
+	Offset int `json:"offset"`
+	Limit  int `json:"limit"`
+}
+
+// RoomUpdate represents a set of fields to be updated via UpdateRoom().
+type RoomUpdate struct {
+	Name        *string `json:"name"`
+	Description *string `json:"description"`
+	Link        string  `json:"link"`
+	Icon        string  `json:"icon"`
+}
