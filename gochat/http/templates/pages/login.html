@@ -1,0 +1,40 @@
+{{ define "title" }}Login{{ end }}
+
+{{ define "content" }}
+<div class="container col-md-6 m-auto">
+	<div class="mt-2">
+		<h1>Sign in</h1>
+	</div>
+	<hr />
+	<div class="card">
+		<div class="card-header">
+			<p class="card-title text-danger">
+				In order to chat, you must be signed in or <a href="/signup">signup</a>.
+			</p>
+		</div>
+		<div class="card-body">
+			<form method="POST">
+				<div class="form-group">
+					<label for="email">Email</label>
+					<input type="email" name="email" class="form-control" required autofocus />
+				</div>
+				<div class="form-group">
+					<label for="password">Password</label>
+					<input
+						type="password"
+						name="password"
+						class="form-control"
+						required
+						autocomplete="off"
+					/>
+				</div>
+				<div class="text-center">
+					<button id="submit-btn" class="btn btn-primary">Login</button>
+				</div>
+			</form>
+		</div>
+	</div>
+	{{ template "social_auth.html" .}}
+</div>
+{{ end }}
+

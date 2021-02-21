@@ -1,0 +1,196 @@
+{{ define "title" }} Chat {{ end }}
+
+{{ define "stylesheets"}}<link rel="stylesheet" href="/public/css/chat.css" />{{ end }}
+
+{{ define "content" }} 
+
+<h1>Hello world!</h1>
+{{ if not .room }}
+<div>
+  <p>
+    Invalid link, please
+    <a href="/">create a new chat room or join an existing one</a>.
+  </p>
+</div>
+{{ else }}
+<div class="chat">
+  <div class="sidebar">
+    <div class="sidebar__header head">
+      <h2 class="sidebar__title">My Rooms</h2>
+    </div>
+    <div class="sidebar__body body">
+      {{ if .MyRooms }} {{ template "partials/rooms_list_sidebar" . }} {{end}}
+    </div>
+  </div>
+  <div class="chat__main">
+    <div class="chat__header head">
+      <div></div>
+      <div></div>
+      <button id="leave-room">Leave room</button>
+    </div>
+    <div class="chat__body body">
+      <ul id="messages" class="chat__messages"></ul>
+      <div class="chatarea__footer">
+        <form class="chat__form" id="chatbox" role="form">
+          <input type="text" id="message" />
+          <button type="submit" class="btn btn-light" disabled>Send</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{{ end }}
+{{ end }} 
+
+{{ define "scripts" }}
+<script>
+var scrollToBottom = function(){
+  var messages = $('#messages')
+  var newMessage = messages.children('li:last-child')
+
+  var clientHeight = messages.prop('clientHeight')
+  var scrollTop = messages.prop('scrollTop')
+  var scrollHeight = messages.prop('scrollHeight')
+  var newMessageHeight = newMessage.innerHeight()
+  var lastMessageHeight = newMessage.prev().innerHeight()
+
+  if (
+    clientHeight + scrollTop + newMessageHeight + lastMessageHeight
+    >=
+    scrollHeight)
+  {
+    messages.scrollTop(scrollHeight)
+  }
+}
+
+var appendChat = function(msg){
+  var messagesBox = $('#messages')
+  var message = $("<li class='message'>")
+  var time = new Date(msg.when);
+  var formattedTime = moment(msg.when).format('h:mm a');
+  var rawText = msg.message;
+  var $msgText = $('<span>');
+  if (rawText.startsWith('/')) {
+    msg.message = rawText.substring(1);
+    $msgText = $('<strong>');
+  } else if (rawText.startsWith('_') && rawText.endsWith('_')) {
+    msg.message = rawText.substring(1, rawText.length - 1);
+    $msgText = $('<em>');
+  } else if (rawText.startsWith('*') && rawText.endsWith('*')) {
+    msg.message = rawText.substring(1, rawText.length - 1);
+    $msgText = $('<strong>');
+  } else if (rawText.startsWith('~') && rawText.endsWith('~')) {
+    msg.message = rawText.substring(1, rawText.length - 1);
+    $msgText = $('<del>');
+  }
+  var userID = {{ .user.ID }}
+  if (parseInt(userID) === parseInt(msg.userID)) {
+    message.addClass("my-message")
+  }
+  if (msg.from === "Admin"){
+    message.addClass("admin-message")
+  }
+  messagesBox.append(
+    message.append(
+      $('<img>')
+        .attr('title', msg.from)
+        .css({
+          borderRadius: '50%',
+          width: 50,
+          verticalAlign: 'middle',
+        })
+        .attr('src', msg.avatarURL),
+      $('<div>')
+        .addClass('message__title')
+        .append(
+          $('<strong>').text(msg.from),
+          $('<span>').text(formattedTime)
+        ),
+      $('<div>')
+        .addClass('message__body')
+        .append($msgText.text(msg.message))
+    )
+  );
+  scrollToBottom()
+}
+</script>
+
+<script>
+$(function () {
+  var socket = null;
+  var msgBox = $('#chatbox input');
+  var messages = $('#messages');
+  var sendButton = $('#chatbox button');
+  
+  msgBox.on('focusin focusout input', function (e) {
+    if (!e.target.value) {
+      sendButton.attr('disabled', 'disabled');
+    } else {
+      sendButton.removeAttr('disabled');
+    }
+  });
+
+  $('#chatbox').submit(function () {
+    if (!msgBox.val()) return false;
+    if (!socket) {
+      alert('Error: There is no socket connection.');
+      return false;
+    }
+    var message = msgBox.val()
+    socket.send(JSON.stringify({ message: message }));
+    msgBox.val('');
+     // make ajax to save message to db 
+     $.post({
+      url: '/messages',
+      contentType: 'application/json',
+      data: JSON.stringify({ message:message,
+        userID:{{ .user.ID }},
+        roomID: {{ .room.ID }}
+      })
+     }).
+     done(function(){
+      console.log("Notify user message was posted.")
+     })
+    return false;
+  });
+
+  if (!window['WebSocket']) {
+    alert('Error: Your browser does not support web sockets.');
+    return
+  }
+  socket = new WebSocket('ws://{{.Host}}/r/{{ .room.ID }}');
+  
+  socket.onclose = function (e) {
+    if (e.code === 1001) return false;
+    var error = $('<em>').text("Seems you are having trouble with your connection...")
+    $('#messages').append(error)
+  };
+  
+  socket.onmessage = function (e) {
+    var msg = JSON.parse(e.data);
+    appendChat(msg)
+    if (msg.from === 'Admin') return false;
+  }
+
+  socket.onopen = function(e){
+    //load messages from db
+    $.get('/messages', function(data){
+      if (!data) return
+      data.forEach(function(item){
+        if (item)
+          appendChat(item);
+      })
+    })
+  }
+
+  $('#leave-room').on('click', function (e) {
+    $.post('/r/leave/{{.room.ID}}').done(function () {
+      $('#chatbox').remove()
+      var error = $('<em style="color:red;">').
+      text("You are no longer a participant of this room.")
+      $('#messages').append(error)
+    });
+  });
+});
+</script>
+{{ end }}

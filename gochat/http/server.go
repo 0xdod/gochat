@@ -3,9 +3,12 @@ package http
 import (
 	"log"
 	"net/http"
+	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/urfave/negroni"
 )
 
 // Server wraps net/http server
@@ -16,14 +19,14 @@ type Server struct {
 
 // NewServer creates a new server.
 func NewServer() *Server {
-	r := mux.NewRouter()
-	s = &http.Server{
-		Handler: r,
+	server := &http.Server{
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-	return &Server{s, r}
+	s := &Server{server: server}
+	setupRoutes(s)
+	return s
 }
 
 // Run the servr
@@ -32,7 +35,23 @@ func (s *Server) Run(port string) {
 	log.Fatal(s.server.ListenAndServe())
 }
 
-// Router return mux
-func (s *Server) Router() *mux.Router {
-	return s.router.(*mux.Router)
+func setupRoutes(s *Server) {
+	r := mux.NewRouter().StrictSlash(true)
+	n := negroni.Classic()
+	dir, _ := filepath.Abs(filepath.Join(dirname(), "public"))
+	r.PathPrefix("/public/").
+		Handler(http.StripPrefix("/public/", http.FileServer(http.Dir(dir))))
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`Hello world!`))
+	})
+	r.HandleFunc("/chat", index)
+	n.UseHandler(r)
+	s.server.Handler = n
+}
+
+func dirname() string {
+	if _, file, _, ok := runtime.Caller(0); ok {
+		return filepath.Dir(file)
+	}
+	return "."
 }

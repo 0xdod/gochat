@@ -1,0 +1,15 @@
+{{ define "partials/rooms_list_sidebar" }}
+<ul>
+{{ range .MyRooms }}
+	<li>
+	{{ if not (eq $.room.ID .ID) }}
+	  <a href="/chat/{{ .Link }}">
+	  {{ .Name}} 
+	</a>
+	{{ else }}
+	<a href="#" class="selected">{{ .Name}}</a>
+	{{ end }}
+   </li>
+{{ end }}
+</ul>
+{{ end }}

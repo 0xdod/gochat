@@ -1,0 +1,102 @@
+{{ define "title" }}Sign up {{ end }}
+
+{{ define "content" }}
+<div class="container col-md-6 mx-auto">
+	<div class="mt-2">
+		<h1>Sign up</h1>
+	</div>
+	<hr />
+	<div>
+	<div class="card">
+		<p class="card-header">
+			Enter your details to register.
+		</p>
+		<div class="card-body">
+			<form method="POST">
+				<div class="form-group">
+					<label for="firstname">Firstname</label>
+					<input
+						type="text"
+						name="firstname"
+						class="form-control"
+						required
+						autofocus
+					/>
+				</div>
+				<div class="form-group">
+					<label for="lastname">Lastname</label>
+					<input
+						type="text"
+						name="lastname"
+						class="form-control"
+						required
+					/>
+				</div>
+				<div class="form-group">
+					<label for="username">Display name</label>
+					<input
+						type="text"
+						name="username"
+						class="form-control"
+						required
+					/>
+				</div>
+				<div class="form-group">
+					<label for="email">Email</label>
+					<input type="email" name="email" class="form-control" />
+				</div>
+				<div class="form-group">
+					<label for="password">Password</label>
+					<input
+						type="password"
+						name="password"
+						class="form-control"
+						required
+					/>
+				</div>
+				<div class="form-group">
+					<label for="password2">Confirm Password</label>
+					<input
+						type="password"
+						name="password2"
+						class="form-control"
+						required
+					/>
+				</div>
+				<p class="text-danger" id="password-error"></p>
+				<div class="text-center">
+					<button id="submit-btn" class="btn btn-primary">Sign up</button>
+				</div>
+		</div>
+	</div>
+{{ template "social_auth.html" .}}
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+	var password1 = $('input[name="password"]');
+	var password2 = $('input[name="password2"]');
+	var submitBtn = $('#submit-btn');
+	var passwordNotMatchText = 'Passwords do not match.';
+	var pnmNode = $('#password-error');
+	password1.on('input focusin focusout', function (e) {
+		if ($(this).val() !== password2.val()) {
+			submitBtn.attr('disabled', 'disabled');
+			pnmNode.text(passwordNotMatchText);
+		} else {
+			pnmNode.text('');
+			submitBtn.removeAttr('disabled');
+		}
+	});
+	password2.on('input focusin focusout', function (e) {
+		if ($(this).val() !== password1.val()) {
+			submitBtn.attr('disabled', 'disabled');
+			pnmNode.text(passwordNotMatchText);
+		} else {
+			submitBtn.removeAttr('disabled');
+			pnmNode.text('');
+		}
+	});
+</script>
+{{ end }}

@@ -1,0 +1,76 @@
+{{ define "title" }}Join a room to meet people and start chatting {{ end }}
+
+{{ define "inline_styles"}}
+<style type="text/css">
+	button {
+		font-size: 1.6rem !important;
+	}
+	#create-btn {
+		margin: 1rem;
+	}
+</style>
+{{ end }}
+
+{{ define "content" }}
+<div class="container">
+	<div>
+		<h1>Welcome mate!</h1>
+		<p style="text-align: right;"><a href="/logout">Sign out</a><p>
+	</div>
+<h2>Available rooms</h2>
+{{ if .rooms }}
+  {{ template "partials/rooms_list" .rooms }}
+{{else}}
+<p>No room available, please create one below!</p>
+{{ end }}
+
+{{ if .MyRooms }}
+  <h3>Your rooms</h3>
+  {{ template "partials/rooms_list" .MyRooms }}
+{{ end }}
+ 
+<button data-visible id="create-btn" class="btn btn-primary">Create a new room</button>
+<div class="card col-md-6" id="create">
+	<h3 class="card-header">
+		Create a new room
+	</h3>
+	<form class=" card-body" id="create-form" action="" method="POST">
+	<div class="form-group">
+		<label for="name">Name</label>
+		<input class="form-control" type="text" name="name" placeholder="Enter room's name" required>
+	</div>
+	<div class="form-group">
+		<label for="description">Description</label>
+		<input class="form-control" type="text" name="description" placeholder="room's description">
+	</div>
+	<button class="btn btn-primary">Create</button>
+</form>
+</div>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+$(function(){
+	var form = $('#create')
+	form.hide()
+
+	$('#create-btn').on('click', function(e){
+		var $this = $(this)
+		var text = $this.text()
+		var visible = $this.data('visible')
+		if (visible){
+			form.hide()
+			$this.data('visible','')
+			$this.text("X")
+		}else{
+			form.show()
+			$this.data('visible','true')
+			$this.text("Create a new room")
+		}
+		text = text === 'X' ? "Create a new room" : "X"
+		$this.text(text)
+	})
+})
+</script>
+{{ end }}
