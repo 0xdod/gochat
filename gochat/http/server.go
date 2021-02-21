@@ -29,7 +29,7 @@ func NewServer() *Server {
 	return s
 }
 
-// Run the servr
+// Run the server
 func (s *Server) Run(port string) {
 	s.server.Addr = port
 	log.Fatal(s.server.ListenAndServe())
@@ -45,6 +45,7 @@ func setupRoutes(s *Server) {
 		w.Write([]byte(`Hello world!`))
 	})
 	r.HandleFunc("/chat", index)
+	r.HandleFunc("/ws", handleWS)
 	n.UseHandler(r)
 	s.server.Handler = n
 }
