@@ -2,18 +2,15 @@ package gochat
 
 import (
 	"context"
-	"time"
 )
 
 // Room represents a single chat room.
 type Room struct {
-	ID          uint      `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description,omitempty"`
-	Link        string    `json:"link"`
-	Icon        string    `json:"icon"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	Model
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Link        string `json:"link"`
+	Icon        string `json:"icon"`
 }
 
 // RoomService represents a service for managing messages.

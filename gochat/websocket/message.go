@@ -11,7 +11,7 @@ const (
 	UserJoined = "join"
 )
 
-//type message is a representation of messages sent between users
+// Message is a representation of messages sent between users
 type Message struct {
 	From    string    `json:"from,omitempty"`
 	Message string    `json:"message,omitempty"`

@@ -5,37 +5,32 @@ import (
 	"io"
 	"log"
 	"path/filepath"
-	"runtime"
 	"sync"
+
+	"io/fs"
+
+	"embed"
 )
 
-// type TemplateConfig struct {
-// 	LayoutsDir  string
-// 	PartialsDir string
-// }
+//go:embed layouts/*.html pages/*.html partials/*.html
+var templatesFS embed.FS
 
-// Template is used to hold multiple templates
-// to allow sharing of layout template
 type templateStore struct {
 	once      sync.Once
 	templates map[string]*template.Template
 	isParsed  bool
 }
 
-var globalTemplates *templateStore = &templateStore{}
+var globalTemplates = &templateStore{}
 
-func (ts *templateStore) Templates() map[string]*template.Template {
-	return ts.templates
-}
-
-func (ts *templateStore) ParseTemplates(templatesDir string) {
+// ParseTemplates parses the templates in a given directory.
+func (ts *templateStore) ParseTemplates() {
 	ts.once.Do(func() {
 		templates := make(map[string]*template.Template)
-		layoutsDir := filepath.Join(templatesDir, "layouts")
-		partialsDir := filepath.Join(templatesDir, "partials")
-		layouts, err := filepath.Glob(layoutsDir + "/*.html")
-		partials, err := filepath.Glob(partialsDir + "/*.html")
-		pages, err := filepath.Glob(templatesDir + "/pages/*.html")
+		layouts, err := fs.Glob(templatesFS, "layouts/*.html")
+		partials, err := fs.Glob(templatesFS, "partials/*.html")
+		pages, err := fs.Glob(templatesFS, "pages/*.html")
+
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -44,7 +39,7 @@ func (ts *templateStore) ParseTemplates(templatesDir string) {
 			for _, page := range pages {
 				files := []string{layout, page}
 				files = append(files, partials...)
-				temp := template.Must(template.ParseFiles(files...))
+				temp := template.Must(template.ParseFS(templatesFS, files...))
 				templates[filepath.Base(page)] = temp
 			}
 		}
@@ -53,17 +48,21 @@ func (ts *templateStore) ParseTemplates(templatesDir string) {
 	})
 }
 
-func Render(out io.Writer, templateName string, contextData interface{}) {
-	if !globalTemplates.isParsed {
-		globalTemplates.ParseTemplates(dirname())
+// Render executes a template to an io.Writer.
+func (ts *templateStore) Render(out io.Writer, name string, data interface{}) {
+	if !ts.isParsed {
+		panic("Templates not parsed")
 	}
-	t := globalTemplates.Templates()
-	t[templateName].ExecuteTemplate(out, "base", contextData)
+	ts.templates[name].ExecuteTemplate(out, "base", data)
 }
 
-func dirname() string {
-	if _, file, _, ok := runtime.Caller(0); ok {
-		return filepath.Dir(file)
-	}
-	return "."
+// ParseTemplates parses the files in a given directory
+// to the global templateStore.
+func ParseTemplates() {
+	globalTemplates.ParseTemplates()
+}
+
+// Render executes a template from the global templateStore.
+func Render(out io.Writer, templateName string, contextData interface{}) {
+	globalTemplates.Render(out, templateName, contextData)
 }

@@ -5,18 +5,23 @@ import (
 	"time"
 )
 
+// Model adds basic database fields.
+type Model struct {
+	ID        int        `json:"id,omitempty" gorm:"primary_key"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at,omitempty" sql:"index"`
+}
+
 // User represents a user in the system. Users are typically created after
 // signing up via username and password.
 type User struct {
-	ID        uint      `json:"id"`
-	Name      string    `json:"name"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	Password  string    `json:"password"`
-	AvatarURL string    `json:"avatar_url"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	DeletedAt time.Time `json:"deleted_at"`
+	Model
+	Name      string `json:"name"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+	AvatarURL string `json:"avatar_url"`
 }
 
 // UserService represents a service for managing users.

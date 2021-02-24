@@ -14,7 +14,7 @@
     <div class="chat__header head">
       <div></div>
       <div></div>
-      <button id="leave-room">Leave room</button>
+      <button class="btn btn-danger" id="leave-room">Leave room</button>
     </div>
     <div class="chat__body body">
       <ul id="messages" class="chat__messages"></ul>
@@ -31,114 +31,110 @@
 
 {{ define "scripts" }}
 <script>
-var _$ = function(){
-  var messages = $('#messages')
-  var newMessage = messages.children('li:last-child')
-
-  var clientHeight = messages.prop('clientHeight')
-  var scrollTop = messages.prop('scrollTop')
-  var scrollHeight = messages.prop('scrollHeight')
-  var newMessageHeight = newMessage.innerHeight()
-  var lastMessageHeight = newMessage.prev().innerHeight()
-  var viewport = clientHeight + scrollTop + newMessageHeight + lastMessageHeight
-  if ( viewport >= scrollHeight){
-    messages.scrollTop(scrollHeight)
-  }
-}
-</script>
-
-<script>
 $(function () {
   var socket = null;
-  var msgBox = $('#chatbox input');
-  var messages = $('#messages');
-  var sendButton = $('#chatbox button');
-  
-  msgBox.on('focusin focusout input', function (e) {
+  var $msgTextInput = $('#chatbox input');
+  var $messageList = $('#messages');
+  var $sendButton = $('#chatbox button');
+
+  $msgTextInput.on('focusin focusout input', function (e) {
     if (!e.target.value) {
-      sendButton.attr('disabled', 'disabled');
+      $sendButton.attr('disabled', 'disabled');
     } else {
-      sendButton.removeAttr('disabled');
+      $sendButton.removeAttr('disabled');
     }
   });
 
   $('#chatbox').submit(function () {
-    if (!msgBox.val()) return false;
+    if (!$msgTextInput.val()) return false;
     if (!socket) {
       alert('Error: There is no socket connection.');
       return false;
     }
-    var message = msgBox.val()
+    var message = $msgTextInput.val();
     socket.send(JSON.stringify({ message: message }));
-    msgBox.val('');
+    $msgTextInput.val('');
     return false;
   });
 
   if (!window['WebSocket']) {
     alert('Error: Your browser does not support web sockets.');
-    return
+    return;
   }
   socket = new WebSocket('ws://{{.Host}}/ws');
-  
+
   socket.onclose = function (e) {
+    var retries = 5;
     if (e.code === 1001) return false;
-    var error = $('<em>').text("Seems you are having trouble with your connection...")
-    $('#messages').append(error)
+    var error = $('<em>').text(
+      'Seems you are having trouble with your connection...'
+    );
+    $messageList.append(error);
   };
-  
+
+  var formatMessage = function (message) {
+    var htmlTag = $('<span>');
+    var text = message ;
+    if (message.startsWith('/')) {
+      text = message.substring(1);
+      htmlTag = $('<strong>');
+    } else if (message.startsWith('_') && message.endsWith('_')) {
+      text = message.substring(1, message.length - 1);
+      htmlTag = $('<em>');
+    } else if (message.startsWith('*') && message.endsWith('*')) {
+      text = message.substring(1, message.length - 1);
+      htmlTag = $('<strong>');
+    } else if (message.startsWith('~') && message.endsWith('~')) {
+      text = message.substring(1, message.length - 1);
+      htmlTag = $('<del>');
+    }else {
+      text = message
+    }
+    return htmlTag.text(text);
+  };
+
+  var scrollToBottom = function () {
+    var newMessage = $messageList.children('li:last-child');
+    var clientHeight = $messageList.prop('clientHeight');
+    var scrollTop = $messageList.prop('scrollTop');
+    var scrollHeight = $messageList.prop('scrollHeight');
+    var newMessageHeight = newMessage.innerHeight();
+    var lastMessageHeight = newMessage.prev().innerHeight();
+    var viewport =
+      clientHeight + scrollTop + newMessageHeight + lastMessageHeight;
+    if (viewport >= scrollHeight) {
+      $messageList.scrollTop(scrollHeight);
+    }
+  };
+
   socket.onmessage = function (e) {
-    var msg = JSON.parse(e.data);
+    var data = JSON.parse(e.data);
+    var $message = $("<li class='message'>");
+    var time = new Date(data.when);
+    var formattedTime = moment(time).format('h:mm a');
 
+    $messageList.append(
+      $message.append(
+        $('<img>')
+          .attr('title', data.from)
+          .css({
+            borderRadius: '50%',
+            width: 50,
+            verticalAlign: 'middle',
+          })
+          .attr('src', data.avatarURL),
+        $('<div>')
+          .addClass('message__title')
+          .append(
+            $('<strong>').text(data.from),
+            $('<span>').text(formattedTime)
+          ),
+        $('<div>').addClass('message__body').append(formatMessage(data.message))
+      )
+    );
 
-     var messagesBox = $('#messages')
-  var message = $("<li class='message'>")
-  var time = new Date(msg.when);
-  var formattedTime = moment(msg.when).format('h:mm a');
-  var rawText = msg.message;
-  var $msgText = $('<span>');
-  if (rawText.startsWith('/')) {
-    msg.message = rawText.substring(1);
-    $msgText = $('<strong>');
-  } else if (rawText.startsWith('_') && rawText.endsWith('_')) {
-    msg.message = rawText.substring(1, rawText.length - 1);
-    $msgText = $('<em>');
-  } else if (rawText.startsWith('*') && rawText.endsWith('*')) {
-    msg.message = rawText.substring(1, rawText.length - 1);
-    $msgText = $('<strong>');
-  } else if (rawText.startsWith('~') && rawText.endsWith('~')) {
-    msg.message = rawText.substring(1, rawText.length - 1);
-    $msgText = $('<del>');
-  }
-  if (msg.from === "Admin"){
-    message.addClass("admin-message")
-  }
-
-
-
-
-     messagesBox.append(
-    message.append(
-      $('<img>')
-        .attr('title', msg.from)
-        .css({
-          borderRadius: '50%',
-          width: 50,
-          verticalAlign: 'middle',
-        })
-        .attr('src', msg.avatarURL),
-      $('<div>')
-        .addClass('message__title')
-        .append(
-          $('<strong>').text(msg.from),
-          $('<span>').text(formattedTime)
-        ),
-      $('<div>')
-        .addClass('message__body')
-        .append($msgText.text(msg.message))
-    )
-  );
-    if (msg.from === 'Admin') return false;
-  }
+    scrollToBottom();
+  };
 });
 </script>
 {{ end }}
