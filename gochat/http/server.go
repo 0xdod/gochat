@@ -5,8 +5,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"path/filepath"
-	"runtime"
 	"time"
 
 	"github.com/0xdod/gochat/gochat"
@@ -75,13 +73,10 @@ func setupRoutes(s *Server) {
 	r.HandleFunc("/ws", s.handleWS)
 	r.HandleFunc("/login", s.login)
 	r.HandleFunc("/signup", s.register)
+	r.HandleFunc("/room", s.createRoom)
+	r.HandleFunc("/rooms", s.roomList)
+	n.Use(negroni.HandlerFunc(FlashMiddleware))
 	n.UseHandler(r)
-	s.server.Handler = n
-}
 
-func dirname() string {
-	if _, file, _, ok := runtime.Caller(0); ok {
-		return filepath.Dir(file)
-	}
-	return "."
+	s.server.Handler = n
 }

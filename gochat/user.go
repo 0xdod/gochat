@@ -3,6 +3,8 @@ package gochat
 import (
 	"context"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Model adds basic database fields.
@@ -18,10 +20,25 @@ type Model struct {
 type User struct {
 	Model
 	Name      string `json:"name"`
-	Username  string `json:"username"`
-	Email     string `json:"email"`
+	Username  string `json:"username" gorm:"uniqueIndex"`
+	Email     string `json:"email" gorm:"uniqueIndex"`
 	Password  string `json:"password"`
 	AvatarURL string `json:"avatar_url"`
+}
+
+func (u *User) SetPassword(password string) error {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	if err != nil {
+		return err
+	}
+	u.Password = string(bytes)
+	return nil
+
+}
+
+func (u *User) ComparePassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	return err == nil
 }
 
 // UserService represents a service for managing users.
@@ -45,6 +62,9 @@ type UserService interface {
 	// if current user is not the user being deleted. Returns ENOTFOUND if
 	// user does not exist.
 	DeleteUser(ctx context.Context, id int) error
+
+	// Authenticate finds a user with details provided.
+	Authenticate(ctx context.Context, email, password string) *User
 }
 
 // UserFilter represents a filter passed to FindUsers().

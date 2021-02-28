@@ -14,6 +14,13 @@
 		{{ block "inline_styles" .}} {{ end }}
 	</head>
 	<body>
+        {{if .Context}}
+        {{ range (.Context.Value "messages") }}
+        <ul>
+            <li class="alert alert-success">{{.}} </li>
+        </ul>
+        {{ end }}
+        {{ end  }}
 		{{ block "content" . }}
 		    <p>This is default</p>
 		{{ end }}
