@@ -7,10 +7,10 @@ import (
 // Room represents a single chat room.
 type Room struct {
 	Model
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	Link        string `json:"link"`
-	Icon        string `json:"icon"`
+	Name        string  `json:"name" gorm:"not null"`
+	Description *string `json:"description,omitempty"`
+	Link        string  `json:"link" gorm:"not null"`
+	Icon        *string `json:"icon"`
 }
 
 // RoomService represents a service for managing messages.

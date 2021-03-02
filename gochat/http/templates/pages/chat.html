@@ -61,7 +61,7 @@ $(function () {
     alert('Error: Your browser does not support web sockets.');
     return;
   }
-  socket = new WebSocket('ws://{{.Host}}/ws');
+  socket = new WebSocket('ws://{{.request.Host}}/ws');
 
   socket.onclose = function (e) {
     var retries = 5;

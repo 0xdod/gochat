@@ -14,13 +14,9 @@
 		{{ block "inline_styles" .}} {{ end }}
 	</head>
 	<body>
-        {{if .Context}}
-        {{ range (.Context.Value "messages") }}
-        <ul>
-            <li class="alert alert-success">{{.}} </li>
-        </ul>
+        {{ with (.request.Context.Value "messages") }}
+        {{ template "flash-message.html" .}}
         {{ end }}
-        {{ end  }}
 		{{ block "content" . }}
 		    <p>This is default</p>
 		{{ end }}

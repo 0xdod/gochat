@@ -14,7 +14,7 @@ func init() {
 var availableRooms map[*ws.Room]bool
 
 func (s *Server) chat(w http.ResponseWriter, r *http.Request) {
-	s.render(w, "chat.html", r)
+	s.render(w, r, "chat.html", nil)
 }
 
 func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
@@ -37,10 +37,10 @@ func (s *Server) createRoom(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/chat", 301)
 		return
 	}
-	s.render(w, "room_list.html", r)
+	s.render(w, r, "room_list.html", nil)
 
 }
 
 func (s *Server) roomList(w http.ResponseWriter, r *http.Request) {
-	s.render(w, "room_list.html", r)
+	s.render(w, r, "room_list.html", nil)
 }

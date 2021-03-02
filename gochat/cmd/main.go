@@ -1,13 +1,15 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"log"
+	"os"
 
-	"github.com/0xdod/gochat/gochat/gorm"
 	"github.com/0xdod/gochat/gochat/http"
+	"github.com/0xdod/gochat/gochat/store"
 )
 
+// Move these to env and conf
 const (
 	host     = "localhost"
 	port     = 5432
@@ -16,16 +18,41 @@ const (
 	dbname   = "gochat"
 )
 
-func main() {
+type Config struct {
+	Addr string
+	DSN  string
+}
+
+func getConfig() *Config {
+	cfg := new(Config)
 	localDSN := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
-	db, err := gorm.ConnectToDB(localDSN)
+	flag.StringVar(&cfg.Addr, "addr", getEnvWithDefault("PORT", "4000"), "HTTP server address")
+	flag.StringVar(&cfg.DSN, "dsn", getEnvWithDefault("PSQL_URL", localDSN), "Data source name")
+	flag.Parse()
+	return cfg
+}
+
+func main() {
+	cfg := getConfig()
+	db, err := store.ConnectToDB(cfg.DSN)
 	if err != nil {
 		panic(err)
 	}
 	s := http.NewServer()
 	s.LoadTemplates()
 	s.CreateServices(db)
-	log.Println("Server running on port :8080")
-	s.Run(":8080")
+	s.InfoLog.Printf("Server running on port %s", cfg.Addr)
+	s.Run(cfg.Addr)
+}
+
+func getEnvWithDefault(name, def string) string {
+	p := os.Getenv(name)
+	if p == "" {
+		p = def
+	}
+	if name == "PORT" {
+		return ":" + p
+	}
+	return p
 }

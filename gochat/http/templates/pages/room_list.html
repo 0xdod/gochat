@@ -13,7 +13,9 @@
 
 {{ define "content" }}
 <div class="container">
-
+    {{if .user }}
+    Hello {{.user.Name}} 
+    {{ end }}
 <div class="card col-md-6" id="create">
 	<h3 class="card-header">
 		Create a new room

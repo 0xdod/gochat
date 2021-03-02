@@ -19,11 +19,11 @@ type Model struct {
 // signing up via username and password.
 type User struct {
 	Model
-	Name      string `json:"name"`
-	Username  string `json:"username" gorm:"uniqueIndex"`
-	Email     string `json:"email" gorm:"uniqueIndex"`
-	Password  string `json:"password"`
-	AvatarURL string `json:"avatar_url"`
+	Name      string  `json:"name" gorm:"size:255,not null"`
+	Username  string  `json:"username" gorm:"size:50,uniqueIndex,not null"`
+	Email     string  `json:"email" gorm:"size:255,uniqueIndex,not null"`
+	Password  string  `json:"password" gorm:"not null"`
+	AvatarURL *string `json:"avatar_url"`
 }
 
 func (u *User) SetPassword(password string) error {
@@ -36,7 +36,7 @@ func (u *User) SetPassword(password string) error {
 
 }
 
-func (u *User) ComparePassword(password string) bool {
+func (u *User) VerifyPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	return err == nil
 }

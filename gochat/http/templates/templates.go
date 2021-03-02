@@ -51,7 +51,7 @@ func (ts *templateStore) ParseTemplates() {
 // Render executes a template to an io.Writer.
 func (ts *templateStore) Render(out io.Writer, name string, data interface{}) {
 	if !ts.isParsed {
-		panic("Templates not parsed")
+		panic("templates not parsed")
 	}
 	ts.templates[name].ExecuteTemplate(out, "base", data)
 }

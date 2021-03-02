@@ -9,9 +9,12 @@
 	<div>
 	<div class="card">
 		<p class="card-header">
-			Enter your details to register.
+			Enter your details to register. or 
 		</p>
 		<div class="card-body">
+            {{ with .error }}
+              <div class="text-danger">{{.}}</div>
+            {{end}}
 			<form method="POST">
 				<div class="form-group">
 					<label for="name">Name</label>
@@ -32,6 +35,7 @@
 					/>
 				</div>
 				<div class="form-group">
+                    
 					<label for="email">Email</label>
 					<input type="email" name="email" class="form-control" />
 				</div>

@@ -1,4 +1,4 @@
-package gorm
+package store
 
 import (
 	"github.com/0xdod/gochat/gochat"
