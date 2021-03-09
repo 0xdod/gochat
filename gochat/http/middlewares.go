@@ -8,8 +8,8 @@ import (
 // FlashMiddleware retrieves flash messages from request.
 func FlashMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	session, _ := sessionStore.Get(r, "flash")
-	messages := []FlashMessage{}
 	fm := session.Flashes("flash")
+	messages := make([]FlashMessage, 0)
 	if len(fm) == 0 {
 		next(w, r)
 		return
@@ -18,8 +18,8 @@ func FlashMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFu
 		message := DeserializeFlashMessage(v.(string))
 		messages = append(messages, message)
 	}
-	session.Save(r, w)
 	r = r.WithContext(context.WithValue(r.Context(), "messages", messages))
+	session.Save(r, w)
 	next(w, r)
 
 }
@@ -71,7 +71,7 @@ func (s *Server) RequestUserMiddleware(w http.ResponseWriter, r *http.Request, n
 		next(w, r)
 		return
 	}
-	user, err := s.services.user.FindUserByID(context.Background(), id)
+	user, err := s.UserService.FindUserByID(context.Background(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -3,9 +3,11 @@ package http
 import (
 	"bytes"
 	"embed"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"runtime/debug"
 	"time"
 
 	"github.com/0xdod/gochat/gochat"
@@ -20,17 +22,13 @@ var publicFiles embed.FS
 
 // Server wraps net/http server
 type Server struct {
-	*services
 	server   *http.Server
 	router   http.Handler
 	InfoLog  *log.Logger
 	ErrorLog *log.Logger
 	Renderer templates.Renderer
-}
-
-type services struct {
-	user gochat.UserService
-	room gochat.RoomService
+	gochat.UserService
+	gochat.RoomService
 }
 
 type templateData map[string]interface{}
@@ -50,10 +48,8 @@ func NewServer() *Server {
 }
 
 func (s *Server) CreateServices(db *store.DB) {
-	s.services = &services{
-		room: store.NewRoomStore(db),
-		user: store.NewUserStore(db),
-	}
+	s.RoomService = store.NewRoomStore(db)
+	s.UserService = store.NewUserStore(db)
 }
 
 // LoadTemplates loads parsed templates into memory
@@ -68,7 +64,7 @@ func (s *Server) render(w http.ResponseWriter, r *http.Request, name string, dat
 	data["request"] = r
 	ctx := r.Context()
 	data["user"] = UserFromContext(ctx)
-	data["flash_messages"] = FlashFromContext(ctx)
+	data["messages"] = FlashFromContext(ctx)
 	buf := new(bytes.Buffer)
 	err := s.Renderer.Render(buf, name, data)
 	if err != nil {
@@ -108,12 +104,13 @@ func setupRoutes(s *Server) {
 
 	r.PathPrefix("/public/").Handler(http.FileServer(http.FS(publicFiles)))
 	r.HandleFunc("/", s.handleIndex)
-	r.Handle("/chat", adaptFunc(s.chat, auth))
-	r.HandleFunc("/ws", s.handleWS)
+	r.Handle("/chat/{invite}", adaptFunc(s.chat, auth))
+	r.HandleFunc("/ws/{id}", s.handleWS)
 	r.HandleFunc("/login", s.login)
 	r.HandleFunc("/signup", s.register)
 	r.Handle("/room/create", adaptFunc(s.createRoom, auth)).Methods("POST")
 	r.Handle("/rooms", adaptFunc(s.listRooms, auth))
+	r.Handle("/room/join", adaptFunc(s.joinRoom, auth)).Methods("POST")
 
 	n.UseHandler(r)
 
@@ -128,4 +125,14 @@ func adaptNegroni(h http.Handler, nh ...negroni.Handler) http.Handler {
 func adaptFunc(h http.HandlerFunc, nh ...negroni.Handler) http.Handler {
 	n := negroni.New(nh...)
 	return n.With(negroni.WrapFunc(h))
+}
+
+func (s *Server) serverError(w http.ResponseWriter, err error) {
+	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+	s.ErrorLog.Output(2, trace)
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+}
+
+func (s *Server) clientError(w http.ResponseWriter, status int) {
+	http.Error(w, http.StatusText(status), status)
 }

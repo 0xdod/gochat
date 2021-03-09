@@ -1,55 +1,37 @@
 {{ define "title" }} Chat {{ end }}
 
-{{ define "stylesheets"}}<link rel="stylesheet" href="/public/css/chat.css" />{{end }}
-
-{{ define "contents" }} 
-<div class="chat">
-  <div class="sidebar">
-    <div class="sidebar__header head">
-      <h2 class="sidebar__title">My Rooms</h2>
-    </div>
-  </div>
-  <div class="chat__main">
-    <div class="chat__header head">
-      <div></div>
-      <div></div>
-      <button class="btn btn-danger" id="leave-room">Leave room</button>
-    </div>
-    <div class="chat__body body">
-      <ul id="messages" class="chat__messages"></ul>
-      <div class="chatarea__footer">
-        <form class="chat__form" id="chatbox" role="form">
-          <input type="text" id="message" />
-          <button type="submit" class="btn btn-light" disabled>Send</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-{{ end }}
+{{ define "stylesheets"}}
+<link rel="stylesheet" href="/public/css/chat.css" />
+{{end }}
 
 {{ define "content" }}
 {{ if .user }}
+{{ $is_present := (if (.user.IsParticipant .room)) }} 
 <div style="min-height:100vh;">
   <div class="bg-dark text-white row col-md-12 m-0 justify-content-center align-items-center" style="height:12vh;">
       <p class="text-right ml-auto font-weight-bold"> Hello {{.user.Name}}</p>
+      {{ if $is_present }}
       <p class="text-right ml-auto"><button class="btn btn-danger" id="leave-room">Leave room</button></p>
+      {{ end }}
   </div>
 
-
-
-
-
-
   <div class="row col-md-12 m-0 p-0" style="height:88vh;">
-    {{ template "sidebar" }}
+    {{ template "sidebar" .}}
     <div class="col-md-9 m-0 p-0 d-flex flex-column justify-content-between">
       <ul id="messages" class="chat-messages m-0 p-0 pl-3"></ul>
       <div class="chatarea__footer">
+      {{ if $is_present }}
         <form class="chat__form" id="chatbox" role="form">
           <input type="text" id="message" />
           <button type="submit" class="btn btn-primary" disabled>Send</button>
         </form>
+      {{ else }}
+      <form action="/room/join" method="POST">
+        <input type="hidden" name="code" value="{{ .room.Invite }}">
+        <input type="hidden" name="id" value="{{ .room.ID }}">
+         <p><button class="btn btn-success btn-block">Join</button></p>
+      </form>
+      {{ end }}
       </div>
     </div>
   </div>
@@ -59,10 +41,6 @@
 {{ end }}
 
 {{ end }}
-
-
-
-
 
 
 {{ define "scripts" }}
@@ -97,7 +75,7 @@ $(function () {
     alert('Error: Your browser does not support web sockets.');
     return;
   }
-  socket = new WebSocket('ws://{{.request.Host}}/ws');
+  socket = new WebSocket('ws://{{.request.Host}}/ws/{{.room.ID}}');
 
   socket.onclose = function (e) {
     var retries = 5;

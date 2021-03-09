@@ -16,6 +16,10 @@
     {{if .user }}
    <p class="alert alert-sucess"> Hello {{.user.Name}} </p>
     {{ end }}
+
+    {{with .error }}
+    {{.Error}}
+    {{ end }}
  {{ template "create_form.html" .}}
 </div>
 {{ end }}

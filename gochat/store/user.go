@@ -20,8 +20,7 @@ func NewUserStore(db *DB) *UserGorm {
 
 func (us *UserGorm) FindUserByID(ctx context.Context, id int) (*gochat.User, error) {
 	user := &gochat.User{}
-	err := us.DB.WithContext(ctx).First(user, id).Error
-
+	err := us.DB.WithContext(ctx).Preload("RoomsPresent").First(user, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +28,6 @@ func (us *UserGorm) FindUserByID(ctx context.Context, id int) (*gochat.User, err
 }
 
 func (us *UserGorm) Authenticate(ctx context.Context, email, password string) *gochat.User {
-
 	user := &gochat.User{}
 	err := us.DB.WithContext(ctx).Where("email = ?", email).First(user).Error
 

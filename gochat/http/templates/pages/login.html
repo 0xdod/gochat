@@ -1,40 +1,56 @@
-{{ define "title" }}Login{{ end }}
+{{ define "title" }}Log in{{ end }} 
 
 {{ define "content" }}
-<div class="container col-md-6 m-auto">
-	<div class="mt-2">
-		<h1>Sign in</h1>
-	</div>
-	<hr />
-	<div class="card">
-		<div class="card-header">
-			<p class="card-title text-danger">
-				In order to chat, you must be signed in or <a href="/signup">signup</a>.
-			</p>
+<div class="container">
+	<h1>Log in</h1><hr>
+	<div class="row">
+		<div class="col-md-9">
+			<div class="card col-md-6 mx-auto p-0">
+				<div class="card-body">
+					<form method="POST">
+						{{ with .errors }}
+						<p class="text-danger">{{ .}}</p>
+						{{ end }}
+						<div class="form-group">
+							<label class="font-weight-bold" for="email">Email</label>
+							<input
+								type="email"
+								name="email"
+								class="form-control"
+								required
+								autofocus
+							/>
+						</div>	
+						<div class="form-group">
+							<div class="row">
+								<p class="m-0 col">
+									<label class="font-weight-bold" for="password">Password</label>
+								</p>
+								<p class="m-0 col text-right">
+									<span><a href="#">Forgot password?</a></span>
+								</p>
+							</div>
+							<input
+								type="password"
+								name="password"
+								class="form-control"
+								required
+							/>
+						</div>
+						<div class="text-center">
+							<button id="submit-btn" class="btn btn-primary btn-block">
+								Log in
+							</button>
+						</div>
+					</form>
+				</div>
+				<p class="text-center">Don't have an account? <a href="/signup">Sign up</a>.</p>
+			</div>
 		</div>
-		<div class="card-body">
-			<form method="POST">
-				<div class="form-group">
-					<label for="email">Email</label>
-					<input type="email" name="email" class="form-control" required autofocus />
-				</div>
-				<div class="form-group">
-					<label for="password">Password</label>
-					<input
-						type="password"
-						name="password"
-						class="form-control"
-						required
-						autocomplete="off"
-					/>
-				</div>
-				<div class="text-center">
-					<button id="submit-btn" class="btn btn-primary">Login</button>
-				</div>
-			</form>
+		<div class="col-md-3 d-flex justify-content-center align-items-center">
+			{{ template "social_auth.html" "Log in"}}
 		</div>
 	</div>
-	{{ template "social_auth.html" .}}
 </div>
-{{ end }}
 
+{{ end }}

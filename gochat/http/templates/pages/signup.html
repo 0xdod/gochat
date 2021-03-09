@@ -1,72 +1,88 @@
-{{ define "title" }}Sign up {{ end }}
-
-{{ define "content" }}
-<div class="container col-md-6 mx-auto">
-	<div class="mt-2">
-		<h1>Sign up</h1>
-	</div>
+{{ define "title" }}Sign up {{ end }} {{ define "content" }}
+<div class="container">
+	<h1>Sign up</h1>
 	<hr />
-	<div>
-	<div class="card">
-		<p class="card-header">
-			Enter your details to register. or <a href="/login">login</a>
-		</p>
-		<div class="card-body">
-            {{ with .error }}
-              <div class="text-danger">{{.}}</div>
-            {{end}}
-			<form method="POST">
-				<div class="form-group">
-					<label for="name">Name</label>
-					<input
-						type="text"
-						name="name"
-						class="form-control"
-						required
-					/>
+	<div class="row">
+		<div class="col-md-9">
+			<div class="card col-md-6 mx-auto p-0">
+				<div class="card-body">
+					{{ with .error }}
+					<div class="text-danger">{{.}}</div>
+					{{end}}
+					<form method="POST">
+						<div class="form-group">
+							<label class="font-weight-bold" for="name"
+								>Name</label
+							>
+							<input
+								type="text"
+								name="name"
+								class="form-control"
+								required
+							/>
+						</div>
+						<div class="form-group">
+							<label class="font-weight-bold" for="username"
+								>Username</label
+							>
+							<input
+								type="text"
+								name="username"
+								class="form-control"
+								required
+							/>
+						</div>
+						<div class="form-group">
+							<label class="font-weight-bold" for="email"
+								>Email</label
+							>
+							<input
+								type="email"
+								name="email"
+								class="form-control"
+							/>
+						</div>
+						<div class="form-group">
+							<label class="font-weight-bold" for="password"
+								>Password</label
+							>
+							<input
+								type="password"
+								name="password"
+								class="form-control"
+								required
+							/>
+						</div>
+						<div class="form-group">
+							<label class="font-weight-bold" for="password2"
+								>Confirm Password</label
+							>
+							<input
+								type="password"
+								name="password2"
+								class="form-control"
+								required
+							/>
+						</div>
+						<p class="text-danger" id="password-error"></p>
+						<div class="text-center">
+							<button id="submit-btn" class="btn btn-primary btn-block">
+								Sign up
+							</button>
+						</div>
+					</form>
 				</div>
-				<div class="form-group">
-					<label for="username">Username</label>
-					<input
-						type="text"
-						name="username"
-						class="form-control"
-						required
-					/>
-				</div>
-				<div class="form-group">
-                    
-					<label for="email">Email</label>
-					<input type="email" name="email" class="form-control" />
-				</div>
-				<div class="form-group">
-					<label for="password">Password</label>
-					<input
-						type="password"
-						name="password"
-						class="form-control"
-						required
-					/>
-				</div>
-				<div class="form-group">
-					<label for="password2">Confirm Password</label>
-					<input
-						type="password"
-						name="password2"
-						class="form-control"
-						required
-					/>
-				</div>
-				<p class="text-danger" id="password-error"></p>
-				<div class="text-center">
-					<button id="submit-btn" class="btn btn-primary">Sign up</button>
-				</div>
+				<p class="text-center">
+					Already have an account? <a href="/login">Log in</a>.
+				</p>
+			</div>
+		</div>
+		<div class="col-md-3 d-flex justify-content-center align-items-center">
+			{{ template "social_auth.html" "Sign up"}}
 		</div>
 	</div>
-{{ template "social_auth.html" .}}
 </div>
 {{ end }}
-
 {{ define "scripts" }}
 <script>
 	var password1 = $('input[name="password"]');

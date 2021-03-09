@@ -2,21 +2,26 @@
 <style type="text/css">
 	li {
 		list-style: none;
+		margin-bottom: 5px;
 	}
 </style>
 {{ end }}
-
 <div class="mt-2">
-	<p>Use an existing account</p>
 	<ul>
 		<li>
-			<a href="/auth/login/facebook">Facebook</a>
+			<a class="btn btn-primary" href="/auth/login/facebook">
+			<i class="fab fa-facebook"></i>
+			{{.}} with Facebook</a>
 		</li>
 		<li>
-			<a href="/auth/login/github">GitHub</a>
+			<a class="btn btn-dark px-3" href="/auth/login/github">
+			<i class="fab fa-github"></i>
+			<span>{{.}} with GitHub</span></a>
 		</li>
 		<li>
-			<a href="/auth/login/google">Google</a>
+			<a class="btn btn-light px-3" href="/auth/login/google">
+			<i class="fab fa-google"></i>
+			{{.}} with Google</a>
 		</li>
 	</ul>
 </div>

@@ -9,12 +9,16 @@
 			href="/public/css/bootstrap/bootstrap.min.css"
 			rel="stylesheet"
 		/>
+		<link
+			href="/public/css/fontawesome/css/all.min.css"
+			rel="stylesheet"
+		/>
 		<link rel="stylesheet" href="/public/css/base.css">
 		{{ block "stylesheets" .}} {{end}}
 		{{ block "inline_styles" .}} {{ end }}
 	</head>
 	<body>
-        {{ with .flash_messages }}
+        {{ with .messages }}
         {{ template "flash-message.html" .}}
         {{ end }}
 		{{ block "content" . }}

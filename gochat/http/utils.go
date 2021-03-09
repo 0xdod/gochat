@@ -2,12 +2,9 @@ package http
 
 import (
 	"bytes"
-	"context"
 	"encoding/gob"
-	"fmt"
 	"log"
 	"net/http"
-	"runtime/debug"
 	"strings"
 
 	"github.com/0xdod/gochat/gochat"
@@ -89,35 +86,4 @@ func parseForm(r *http.Request, form interface{}) error {
 		return err
 	}
 	return schemaDecoder.Decode(form, r.PostForm)
-}
-
-func (s *Server) serverError(w http.ResponseWriter, err error) {
-	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	s.ErrorLog.Output(2, trace)
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-}
-
-func (s *Server) clientError(w http.ResponseWriter, status int) {
-	http.Error(w, http.StatusText(status), status)
-
-}
-
-func NewContextWithSession(ctx context.Context, s map[string]interface{}) context.Context {
-	return context.WithValue(ctx, "session", s)
-}
-
-func SessionFromContext(ctx context.Context) map[interface{}]interface{} {
-	session, ok := ctx.Value("session").(map[interface{}]interface{})
-	if !ok {
-		return nil
-	}
-	return session
-}
-
-func FlashFromContext(ctx context.Context) []FlashMessage {
-	messages, ok := ctx.Value("flash").([]FlashMessage)
-	if !ok {
-		return nil
-	}
-	return messages
 }

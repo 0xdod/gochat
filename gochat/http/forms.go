@@ -26,6 +26,11 @@ type roomCreateForm struct {
 	Icon        *string `json:"icon,omitempty" schema:"icon"`
 }
 
+type joinRoomForm struct {
+	ID   string `json:"id,omitempty" schema:"id"`
+	Code string `json:"code,omitempty" schema:"code" validate:"max=10"`
+}
+
 func (form *userSignUpForm) create() *gochat.User {
 	email := strings.ToLower(form.Email)
 	user := &gochat.User{
@@ -38,7 +43,6 @@ func (form *userSignUpForm) create() *gochat.User {
 }
 
 func (form *userSignUpForm) validate() bool {
-
 	return false
 }
 

@@ -5,9 +5,9 @@ import "context"
 // Message represents chat messages exchanged in a room.
 type Message struct {
 	Model
-	RoomID int    `json:"room_id"`
-	UserID int    `json:"user_id"`
-	Text   string `json:"text,omitempty"`
+	RoomID int    `json:"room_id" gorm:"not null"`
+	UserID int    `json:"user_id" gorm:"not null"`
+	Text   string `json:"text,omitempty" gorm:"not null"`
 	Edited bool   `json:"edited,omitempty"`
 }
 

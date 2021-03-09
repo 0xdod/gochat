@@ -13,7 +13,37 @@
 		{{ template "sidebar" .}}
 		<div class="col-md-9">
 			<p>Join a new room</p>
+			{{ with .allRooms }}
+			<ul>
+			    {{ range . }}
+			    <li class="p-3"><a href="{{.Link}}">{{.Name}}</a></li>
+			    {{ else }}
+			    <p class="info p-3">No room available.</p>
+			    {{end}}
+			</ul>
+			{{ end }}
+			{{ template "create_form.html" .}}
 		</div>
 	</div>
 </div>
+{{ end }}
+
+
+{{ define "scripts"}}
+<script>
+	$(function(){
+		var joinBtn = $("#join-btn")
+		var el = $('#create')
+		el.hide()
+		var hidden = true
+		joinBtn.on('click', function(e){
+			if (hidden) {
+				el.show()
+			}else {
+				el.hide()
+			}
+			hidden = hidden ? false : true
+		})
+	})
+</script>
 {{ end }}

@@ -1,4 +1,4 @@
-<div class="card col-md-6" id="create">
+<div class="card col-md-6 p-0" id="create">
 	<h3 class="card-header">
 		Create a new room
 	</h3>
@@ -6,7 +6,7 @@
 	<div class="form-group">
 		
 		<label for="name">Name</label>
-		{{ with .errors.name }}
+		{{ with .error.name }}
 		<p class="text-danger">{{.}}</p>
 		{{end}}
 		<input class="form-control" type="text" name="name" placeholder="Enter room's name" required>
@@ -16,5 +16,14 @@
 		<input class="form-control" type="text" name="description" placeholder="room's description" value={{.form.Description}}>
 	</div>
 	<button class="btn btn-primary">Create</button>
+</form>
+
+<h3>Have an invite? </h3>
+<form action="/room/join/" method="POST">
+	<div class="form-group">
+		<label for="code">Invite</label>
+		<input type="text" id="code" class="form-control" name="code">
+	</div>
+	<p><button class="btn btn-primary">Join</button></p>
 </form>
 </div>

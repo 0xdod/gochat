@@ -2,8 +2,8 @@
 <div class="col-md-3 bg-dark text-white" style="position: relative;">
   <h2 class="px-2">My Rooms</h2>
   <ul>
-    {{ range .rooms }}
-    <li class="p-3">{{.Name}}</li>
+    {{ range .user.RoomsPresent }}
+    <li class="p-3"><a href="{{.Link}}">{{.Name}}</a></li>
     {{ else }}
     <p class="info p-3">No room available.</p>
     {{end}}
@@ -15,8 +15,9 @@
     <button
       class="btn btn-success shadow"
       style="height: 50px; width: 50px; border-radius: 50%;"
+      id="join-btn"
     >
-      +
+      <i class="fas fa-plus"></i>
     </button>
   </div>
 </div>

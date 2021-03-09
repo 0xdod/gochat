@@ -14,6 +14,8 @@ type Room struct {
 
 	// clients manages all clients in this room.
 	clients map[*Client]bool
+
+	status string
 }
 
 // NewRoom create a new chat room
@@ -28,6 +30,7 @@ func NewRoom() *Room {
 
 // Run the operation of the chat room
 func (r *Room) Run() {
+	r.status = "running"
 	for {
 		select {
 		case client := <-r.join:
@@ -42,6 +45,10 @@ func (r *Room) Run() {
 			}
 		}
 	}
+}
+
+func (r *Room) IsRunning() bool {
+	return r.status == "running"
 }
 
 // Join a chat room

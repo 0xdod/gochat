@@ -12,11 +12,10 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		form := new(userLoginForm)
 		_ = parseForm(r, form)
 		if err := validateStruct(form); err != nil {
-			//http.Error(w, err.Error(), http.StatusBadRequest)
 			s.clientError(w, http.StatusBadRequest)
 			return
 		}
-		user := s.services.user.Authenticate(context.Background(), form.Email, form.Password)
+		user := s.UserService.Authenticate(context.Background(), form.Email, form.Password)
 		if user == nil {
 			addFlash(w, r, "error", "Cannot find user with such details.")
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -34,18 +33,6 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	s.render(w, r, "login.html", nil)
 }
 
-func NewContextWithUser(ctx context.Context, user *gochat.User) context.Context {
-	return context.WithValue(ctx, "user", user)
-}
-
-func UserFromContext(ctx context.Context) *gochat.User {
-	user, ok := ctx.Value("user").(*gochat.User)
-	if !ok {
-		return nil
-	}
-	return user
-}
-
 func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		form := new(userSignUpForm)
@@ -54,7 +41,7 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		err := s.services.user.CreateUser(context.Background(), form.create())
+		err := s.CreateUser(context.Background(), form.create())
 		if err != nil {
 			//http.Error(w, err.Error(), http.StatusInternalServerError)
 			if err == gochat.ECONFLICT {
