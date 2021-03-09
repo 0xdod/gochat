@@ -23,7 +23,6 @@ func FlashFromContext(ctx context.Context) []FlashMessage {
 	if !ok {
 		return nil
 	}
-
 	return messages
 }
 

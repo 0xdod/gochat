@@ -87,7 +87,7 @@ func (s *Server) createRoom(w http.ResponseWriter, r *http.Request) {
 	room.CreatorID = user.ID
 	room.AddParticipant(user).AddAdmin(user)
 	link := room.InviteLink(r.Host)
-	err := s.CreateRoom(context.Background(), room)
+	err := s.CreateRoom(context.TODO(), room)
 	if err != nil {
 		s.serverError(w, err)
 		return
