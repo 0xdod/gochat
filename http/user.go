@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/0xdod/gochat/gochat"
+	"github.com/0xdod/gochat"
 )
 
 func (s *Server) login(w http.ResponseWriter, r *http.Request) {

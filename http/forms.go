@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/0xdod/gochat/gochat"
+	"github.com/0xdod/gochat"
 )
 
 type userSignUpForm struct {

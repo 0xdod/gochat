@@ -3,7 +3,7 @@ package store
 import (
 	"errors"
 
-	"github.com/0xdod/gochat/gochat"
+	"github.com/0xdod/gochat"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 

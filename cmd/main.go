@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/0xdod/gochat/gochat/http"
-	"github.com/0xdod/gochat/gochat/store"
+	"github.com/0xdod/gochat/http"
+	"github.com/0xdod/gochat/store"
 )
 
 // Move these to env and conf

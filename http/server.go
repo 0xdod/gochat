@@ -10,9 +10,9 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/0xdod/gochat/gochat"
-	"github.com/0xdod/gochat/gochat/http/templates"
-	"github.com/0xdod/gochat/gochat/store"
+	"github.com/0xdod/gochat"
+	"github.com/0xdod/gochat/http/templates"
+	"github.com/0xdod/gochat/store"
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni"
 )

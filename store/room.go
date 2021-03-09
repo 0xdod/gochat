@@ -3,7 +3,7 @@ package store
 import (
 	"context"
 
-	"github.com/0xdod/gochat/gochat"
+	"github.com/0xdod/gochat"
 
 	"gorm.io/gorm"
 )

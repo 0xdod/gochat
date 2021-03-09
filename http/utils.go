@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/0xdod/gochat/gochat"
+	"github.com/0xdod/gochat"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"

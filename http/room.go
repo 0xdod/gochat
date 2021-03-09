@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/0xdod/gochat/gochat"
-	"github.com/0xdod/gochat/gochat/websocket"
+	"github.com/0xdod/gochat"
+	"github.com/0xdod/gochat/websocket"
 	"github.com/gorilla/mux"
 )
 

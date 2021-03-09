@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 
-	"github.com/0xdod/gochat/gochat"
+	"github.com/0xdod/gochat"
 )
 
 func NewContextWithSession(ctx context.Context, s map[string]interface{}) context.Context {
