@@ -6,7 +6,7 @@
 
 {{ define "content" }}
 {{ if .user }}
-{{ $is_present := (if (.user.IsParticipant .room)) }} 
+{{ $is_present := .user.IsParticipant .room }} 
 <div style="min-height:100vh;">
   <div class="bg-dark text-white row col-md-12 m-0 justify-content-center align-items-center" style="height:12vh;">
       <p class="text-right ml-auto font-weight-bold"> Hello {{.user.Name}}</p>
