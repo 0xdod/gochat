@@ -28,7 +28,7 @@ func getConfig() *Config {
 	localDSN := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
 	flag.StringVar(&cfg.Addr, "addr", getEnvWithDefault("PORT", "4000"), "HTTP server address")
-	flag.StringVar(&cfg.DSN, "dsn", getEnvWithDefault("PSQL_URL", localDSN), "Data source name")
+	flag.StringVar(&cfg.DSN, "dsn", getEnvWithDefault("DATABASE_URL", localDSN), "Data source name")
 	flag.Parse()
 	return cfg
 }
